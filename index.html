@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Seating Chart Generator</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        h2 {
+            text-align: center;
+            font-size: 2em;
+            color: #333;
+            margin: 0;
+            margin-bottom: 20px;
+        }
+        .container {
+            display: flex;
+            align-items: flex-start;
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(10, 1fr);
+            grid-template-rows: repeat(10, 1fr);
+            gap: 2px;
+            width: 60vw;
+            height: 60vh;
+            background-color: #ffffff;
+            border: 1px solid #000;
+            position: relative;
+            margin-left: 20px;
+        }
+        .grid-item {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #D3D3D3;
+            border: 1px solid #000;
+            font-size: 1em;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .student-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: 20px;
+        }
+        .student-item {
+            width: 100%;
+            height: 100%;
+            margin: 5px;
+            background-color: #236192; /* Colorado Avalanche blue */
+            border: 1px solid #000;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8em;
+            color: white;
+            cursor: move;
+            transition: transform 0.2s;
+            box-sizing: border-box;
+        }
+        .student-item:hover {
+            transform: scale(1.1);
+        }
+        .input-container {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            background-color: #fff;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            box-shadow: 0px 0px 15px rgba(0, 0, 0, 0.1);
+            color: #333;
+            margin-bottom: 20px;
+        }
+        #studentNames {
+            width: 300px;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            color: #333;
+        }
+        #doneButton, #randomizeButton, #screenshotButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #6F263D;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            transition: background-color 0.3s;
+        }
+        #doneButton:hover, #randomizeButton:hover, #screenshotButton:hover {
+            background-color: #5a1f2e;
+        }
+        #studentNamesContainer {
+            display: none;
+        }
+        .grid-header {
+            width: 60vw;
+            display: flex;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-panel">
+            <div class="input-container">
+                <button id="doneButton" onclick="doneArranging()">Done Arranging Room</button>
+                <div id="studentNamesContainer">
+                    <label for="studentNames">Enter Student Names (separated by semicolons):</label>
+                    <textarea id="studentNames" rows="5" oninput="generateStudents()"></textarea>
+                </div>
+                <button id="screenshotButton" onclick="generateScreenshot()">Generate Screenshot</button>
+            </div>
+            <div id="studentDeskContainer" class="student-container"></div>
+        </div>
+        <div id="classroom">
+            <div class="grid-header">
+                <h2>Front of class</h2>
+            </div>
+            <div class="grid-container" id="gridContainer">
+                <!-- Generate 10x10 grid items -->
+                <script>
+                    for (let i = 0; i < 100; i++) {
+                        document.write(`
+                            <div class="grid-item" onclick="toggleDesk(this)" ondrop="drop(event)" ondragover="allowDrop(event)">
+                            </div>
+                        `);
+                    }
+                </script>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function allowDrop(event) {
+            event.preventDefault();
+        }
+
+        function drag(event) {
+            event.dataTransfer.setData("text", event.target.id);
+        }
+
+        function drop(event) {
+            event.preventDefault();
+            const data = event.dataTransfer.getData("text");
+            const draggedElement = document.getElementById(data);
+            let targetElement = event.target;
+
+            while (!targetElement.classList.contains('grid-item') && !targetElement.classList.contains('student-container')) {
+                targetElement = targetElement.parentElement;
+                if (!targetElement) return;
+            }
+
+            if (draggedElement.className.includes("student-item")) {
+                if (targetElement.className.includes("grid-item") && targetElement.style.backgroundColor === 'rgb(111, 38, 61)') {
+                    if (targetElement.children.length > 0) {
+                        const existingStudent = targetElement.querySelector('.student-item');
+                        const originalParent = draggedElement.parentElement;
+                        targetElement.appendChild(draggedElement);
+                        originalParent.appendChild(existingStudent);
+                    } else {
+                        targetElement.appendChild(draggedElement);
+                    }
+                } else if (targetElement.className.includes("student-container")) {
+                    targetElement.appendChild(draggedElement);
+                }
+            }
+        }
+
+        function toggleDesk(element) {
+            if (element.style.backgroundColor === 'rgb(111, 38, 61)') {
+                element.style.backgroundColor = '#D3D3D3'; // Gray
+                element.draggable = false;
+                element.ondragstart = null;
+                // Remove any student inside the desk
+                while (element.firstChild) {
+                    element.removeChild(element.firstChild);
+                }
+            } else {
+                element.style.backgroundColor = '#6F263D'; // Colorado Avalanche burgundy
+                element.draggable = true;
+                element.ondragstart = drag;
+            }
+        }
+
+        function doneArranging() {
+            document.getElementById('studentNamesContainer').style.display = 'block';
+        }
+
+        function generateStudents() {
+            const studentNames = document.getElementById('studentNames').value.split(';');
+            const studentContainer = document.getElementById('studentDeskContainer');
+            studentContainer.innerHTML = ''; // Clear any existing students
+
+            studentNames.forEach((name, index) => {
+                const studentItem = document.createElement('div');
+                studentItem.className = 'student-item';
+                studentItem.draggable = true;
+                studentItem.id = 'student-' + index; // Unique ID for each student
+                studentItem.ondragstart = drag;
+                studentItem.textContent = name.trim(); // Add student name
+                studentContainer.appendChild(studentItem);
+            });
+
+            const randomizeButton = document.createElement('button');
+            randomizeButton.id = 'randomizeButton';
+            randomizeButton.textContent = 'Randomize';
+            randomizeButton.onclick = randomizeStudents;
+            studentContainer.insertBefore(randomizeButton, studentContainer.firstChild);
+        }
+
+        function randomizeStudents() {
+            const students = Array.from(document.getElementsByClassName('student-item'));
+            const desks = Array.from(document.getElementsByClassName('grid-item')).filter(item => item.style.backgroundColor === 'rgb(111, 38, 61)');
+            
+            // Ensure one student per desk
+            desks.forEach(desk => {
+                while (desk.firstChild) {
+                    desk.removeChild(desk.firstChild);
+                }
+            });
+
+            // Shuffle students and place them into desks
+            students.sort(() => Math.random() - 0.5);
+            desks.forEach((desk, index) => {
+                if (students[index]) {
+                    desk.appendChild(students[index]);
+                }
+            });
+        }
+
+        function generateScreenshot() {
+            const element = document.querySelector('.grid-header').parentElement;
+            html2canvas(element).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'seating-chart.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+    <!-- Import html2canvas library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.0.0/html2canvas.min.js"></script>
+</body>
+</html>
