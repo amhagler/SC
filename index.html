@@ -99,7 +99,7 @@
             border-radius: 4px;
             color: #333;
         }
-        #doneButton, #randomizeButton, #screenshotButton {
+        #randomizeButton {
             margin-top: 20px;
             padding: 10px 20px;
             background-color: #6F263D;
@@ -109,11 +109,8 @@
             color: white;
             transition: background-color 0.3s;
         }
-        #doneButton:hover, #randomizeButton:hover, #screenshotButton:hover {
+        #randomizeButton:hover {
             background-color: #5a1f2e;
-        }
-        #studentNamesContainer {
-            display: none;
         }
         .grid-header {
             width: 60vw;
@@ -127,12 +124,8 @@
     <div class="container">
         <div class="left-panel">
             <div class="input-container">
-                <button id="doneButton" onclick="doneArranging()">Done Arranging Room</button>
-                <div id="studentNamesContainer">
-                    <label for="studentNames">Enter Student Names (separated by semicolons):</label>
-                    <textarea id="studentNames" rows="5" oninput="generateStudents()"></textarea>
-                </div>
-                <button id="screenshotButton" onclick="generateScreenshot()">Generate Screenshot</button>
+                <label for="studentNames">Enter Student Names (separated by semicolons):</label>
+                <textarea id="studentNames" rows="5" oninput="generateStudents()"></textarea>
             </div>
             <div id="studentDeskContainer" class="student-container"></div>
         </div>
@@ -154,6 +147,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.0.0/html2canvas.min.js"></script>
     <script>
         function allowDrop(event) {
             event.preventDefault();
@@ -206,10 +200,6 @@
             }
         }
 
-        function doneArranging() {
-            document.getElementById('studentNamesContainer').style.display = 'block';
-        }
-
         function generateStudents() {
             const studentNames = document.getElementById('studentNames').value.split(';');
             const studentContainer = document.getElementById('studentDeskContainer');
@@ -251,18 +241,6 @@
                 }
             });
         }
-
-        function generateScreenshot() {
-            const element = document.querySelector('.grid-header').parentElement;
-            html2canvas(element).then(canvas => {
-                const link = document.createElement('a');
-                link.download = 'seating-chart.png';
-                link.href = canvas.toDataURL();
-                link.click();
-            });
-        }
     </script>
-    <!-- Import html2canvas library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.0.0/html2canvas.min.js"></script>
 </body>
 </html>
