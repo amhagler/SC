@@ -23,7 +23,8 @@
       --ok: #337a4b;
       --focus: rgba(39, 111, 134, .28);
       --radius: 8px;
-      --cell: 72px;
+      --cell-w: 96px;
+      --cell-h: 62px;
       --gap: 8px;
       --token-font: 13px;
       --label-font: 11px;
@@ -349,8 +350,8 @@
 
     .grid {
       display: grid;
-      grid-template-columns: repeat(10, var(--cell));
-      grid-auto-rows: var(--cell);
+      grid-template-columns: repeat(10, var(--cell-w));
+      grid-auto-rows: var(--cell-h);
       gap: var(--gap);
       justify-content: center;
       padding: 12px;
@@ -361,8 +362,8 @@
     }
 
     .cell {
-      width: var(--cell);
-      height: var(--cell);
+      width: var(--cell-w);
+      height: var(--cell-h);
       border: 1px dashed var(--line);
       border-radius: var(--radius);
       background: transparent;
@@ -377,6 +378,7 @@
       background: var(--desk);
       border: 1px solid var(--desk-border);
       box-shadow: inset 0 -8px 0 rgba(23, 32, 42, .04);
+      border-radius: 7px 7px 10px 10px;
     }
 
     .cell.path {
@@ -414,9 +416,9 @@
       pointer-events: none;
     }
 
-    .token {
+      .token {
       width: calc(100% - 14px);
-      min-height: 34px;
+      min-height: 30px;
       border-radius: 999px;
       background: var(--accent);
       color: white;
@@ -429,6 +431,7 @@
       line-height: 1.05;
       cursor: grab;
       word-break: break-word;
+      overflow: hidden;
     }
 
     .token.locked {
@@ -508,11 +511,11 @@
             <label>Columns <input id="colsInput" type="number" min="3" max="18" value="10" /></label>
             <label>Preset
               <select id="presetSelect">
+                <option value="blank">Blank</option>
                 <option value="rows">Rows</option>
                 <option value="pods">Pods</option>
                 <option value="u">U-shape</option>
                 <option value="lab">Lab tables</option>
-                <option value="blank">Blank</option>
               </select>
             </label>
           </div>
@@ -528,7 +531,7 @@
             <button id="pathToolBtn" type="button">Pathway</button>
             <button id="eraseToolBtn" type="button">Erase</button>
           </div>
-          <p class="hint">Drag across the grid to paint. Double-click a desk to edit its label.</p>
+          <p class="hint">Start blank, choose a preset, or drag across the grid to paint desks and pathways. Double-click a desk to edit its label.</p>
         </section>
 
         <section class="section" data-section="roster">
@@ -591,6 +594,17 @@
               </select>
             </label>
           </div>
+          <div class="grid-row" style="margin-top:8px">
+            <label>Name display
+              <select id="nameStyleSelect">
+                <option value="smart">Smart fit</option>
+                <option value="full">Full name</option>
+                <option value="first">First name</option>
+                <option value="initial">First + last initial</option>
+              </select>
+            </label>
+            <label class="check" style="align-self:end"><input id="autoAdvanceInput" type="checkbox" checked /> Auto-pick next unseated</label>
+          </div>
           <div class="row" style="margin-top:8px">
             <button id="themeBtn" type="button">Dark mode: Off</button>
             <button id="printThemeBtn" type="button">Print theme: Off</button>
@@ -651,7 +665,9 @@
         teacher: "",
         date: new Date().toISOString().slice(0, 10),
         avoidPrevious: true,
-        legibility: 50
+        legibility: 50,
+        nameStyle: "smart",
+        autoAdvance: true
       };
       const history = [];
       let isPainting = false;
@@ -740,10 +756,21 @@
 
       function compactName(name) {
         const clean = name.trim();
-        if (clean.length <= 18) return clean;
         const parts = clean.split(/\s+/);
+        if (state.nameStyle === "full") return clean;
+        if (state.nameStyle === "first") return parts[0] || clean;
+        if (state.nameStyle === "initial" && parts.length > 1) return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+        if (clean.length <= 18) return clean;
         if (parts.length > 1) return `${parts[0]} ${parts[parts.length - 1][0]}.`;
         return `${clean.slice(0, 16)}...`;
+      }
+
+      function nextUnseatedStudentId(afterId = "") {
+        const seated = getSeatedIds();
+        const available = state.students.filter((s) => !s.locked && !seated.has(s.id));
+        if (!available.length) return null;
+        const currentIndex = available.findIndex((s) => s.id === afterId);
+        return available[(currentIndex + 1 + available.length) % available.length].id;
       }
 
       function getStudent(id) {
@@ -784,11 +811,13 @@
 
       function updateCss() {
         const v = Number(state.legibility);
-        const cell = Math.round(58 + (92 - 58) * (v / 100));
+        const cellW = Math.round(82 + (122 - 82) * (v / 100));
+        const cellH = Math.round(52 + (76 - 52) * (v / 100));
         const tokenFont = Math.round(11 + (17 - 11) * (v / 100));
         const labelFont = Math.round(9 + (14 - 9) * (v / 100));
         const gap = Math.round(6 + (10 - 6) * (v / 100));
-        document.documentElement.style.setProperty("--cell", `${cell}px`);
+        document.documentElement.style.setProperty("--cell-w", `${cellW}px`);
+        document.documentElement.style.setProperty("--cell-h", `${cellH}px`);
         document.documentElement.style.setProperty("--token-font", `${tokenFont}px`);
         document.documentElement.style.setProperty("--label-font", `${labelFont}px`);
         document.documentElement.style.setProperty("--gap", `${gap}px`);
@@ -995,7 +1024,7 @@
       }
 
       function renderGrid() {
-        els.grid.style.gridTemplateColumns = `repeat(${state.cols}, var(--cell))`;
+        els.grid.style.gridTemplateColumns = `repeat(${state.cols}, var(--cell-w))`;
         els.grid.innerHTML = "";
         const startPaint = (key) => {
           pushHistory();
@@ -1081,6 +1110,7 @@
               if (!id || !state.desks.has(key)) return;
               pushHistory();
               placeStudent(id, key);
+              if (state.autoAdvance) state.selectedStudentId = nextUnseatedStudentId(id);
               render();
               save();
             });
@@ -1089,8 +1119,9 @@
               const student = getStudent(state.selectedStudentId);
               if (student?.locked) return;
               pushHistory();
-              placeStudent(state.selectedStudentId, key);
-              state.selectedStudentId = null;
+              const placedId = state.selectedStudentId;
+              placeStudent(placedId, key);
+              state.selectedStudentId = state.autoAdvance ? nextUnseatedStudentId(placedId) : null;
               render();
               save();
             });
@@ -1218,6 +1249,8 @@
         $("swapModeBtn").classList.toggle("active", state.swapMode);
         $("avoidPreviousInput").checked = state.avoidPrevious;
         $("legibilityInput").value = state.legibility;
+        $("nameStyleSelect").value = state.nameStyle || "smart";
+        $("autoAdvanceInput").checked = !!state.autoAdvance;
         $("versionSelect").value = state.version;
         $("themeBtn").textContent = `Dark mode: ${state.dark ? "On" : "Off"}`;
         $("printThemeBtn").textContent = `Print theme: ${state.printTheme ? "On" : "Off"}`;
@@ -1371,6 +1404,8 @@
           render(); save();
         });
         $("legibilityInput").addEventListener("input", (e) => { state.legibility = Number(e.target.value); render(); save(); });
+        $("nameStyleSelect").addEventListener("change", (e) => { state.nameStyle = e.target.value; render(); save(); });
+        $("autoAdvanceInput").addEventListener("change", (e) => { state.autoAdvance = e.target.checked; save(); });
         $("versionSelect").addEventListener("change", (e) => { state.version = e.target.value; render(); save(); });
         $("themeBtn").addEventListener("click", () => { state.dark = !state.dark; render(); save(); });
         $("printThemeBtn").addEventListener("click", () => { state.printTheme = !state.printTheme; render(); save(); });
@@ -1407,7 +1442,6 @@
 
       load();
       wire();
-      if (!state.desks.size && !state.students.length) applyPreset("rows");
       render();
     })();
   </script>
