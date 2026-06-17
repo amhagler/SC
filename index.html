@@ -2,1445 +2,1414 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Seating Chart Generator</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
   <style>
-    :root{
-      --burgundy:#6F263D;
-      --navy:#236192;
-      --gold:#FFC857;
-
-      --bg:#0b1020;
-      --panel:#101a33cc;
-      --panel-strong:#101a33;
-      --ink:#eef2ff;
-      --muted:#aab3d1;
-
-      --shadow: 0 16px 40px rgba(0,0,0,.35);
-      --shadow-sm: 0 8px 22px rgba(0,0,0,.25);
-      --radius: 18px;
-
-      /* Legibility-controlled vars (JS will set these) */
-      --cell: 66px;
+    :root {
+      --bg: #eef3f7;
+      --panel: #ffffff;
+      --panel-soft: #f7fafc;
+      --ink: #17202a;
+      --muted: #617083;
+      --line: #d8e1ea;
+      --desk: #ffffff;
+      --desk-border: #9fb2c4;
+      --path: #e8eef4;
+      --accent: #276f86;
+      --accent-strong: #0e596f;
+      --gold: #d99b2b;
+      --danger: #b64242;
+      --ok: #337a4b;
+      --focus: rgba(39, 111, 134, .28);
+      --radius: 8px;
+      --cell: 72px;
       --gap: 8px;
       --token-font: 13px;
       --label-font: 11px;
-
-      /* Cell styles */
-      --cell-bg: rgba(255,255,255,.05);
-      --cell-border: rgba(255,255,255,.10);
-
-      --desk-bg-1: rgba(26,37,80,.95);
-      --desk-bg-2: rgba(26,37,80,.70);
-      --desk-border: rgba(64,96,197,.35);
-
-      --path-bg: rgba(255,200,87,.16);
-      --path-border: rgba(255,200,87,.30);
-
-      --focus: rgba(255,200,87,.65);
+      --shadow: 0 14px 36px rgba(25, 40, 55, .12);
     }
 
-    body.contrast{
-      --bg:#070a12;
-      --panel:#0e1730e6;
-      --panel-strong:#0e1730;
-      --ink:#ffffff;
-      --muted:#c9d1ff;
-
-      --cell-bg: rgba(255,255,255,.07);
-      --cell-border: rgba(255,255,255,.18);
-
-      --desk-bg-1: rgba(34,50,110,1);
-      --desk-bg-2: rgba(20,30,75,.92);
-      --desk-border: rgba(255,200,87,.35);
-
-      --path-bg: rgba(255,200,87,.22);
-      --path-border: rgba(255,200,87,.45);
+    body.dark {
+      --bg: #121821;
+      --panel: #192333;
+      --panel-soft: #111a27;
+      --ink: #f4f7fb;
+      --muted: #b7c2d2;
+      --line: #304258;
+      --desk: #213047;
+      --desk-border: #5e7898;
+      --path: #293648;
+      --accent: #6bb8cb;
+      --accent-strong: #8bd1e1;
+      --gold: #f1bf58;
+      --danger: #ef7777;
+      --ok: #79c691;
+      --shadow: 0 14px 36px rgba(0, 0, 0, .32);
     }
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      min-height:100vh;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-      color:var(--ink);
-      background:
-        radial-gradient(1100px 600px at 20% -10%, rgba(35,97,146,.35), transparent 60%),
-        radial-gradient(900px 500px at 100% 10%, rgba(111,38,61,.35), transparent 55%),
-        radial-gradient(800px 500px at 40% 110%, rgba(255,200,87,.18), transparent 60%),
-        var(--bg);
-      padding: 22px;
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      padding: 18px;
     }
 
-    .app{
-      max-width: 1320px;
+    .app {
+      max-width: 1480px;
       margin: 0 auto;
-      display:grid;
-      grid-template-columns: 440px 1fr;
-      gap: 18px;
-      align-items:start;
+      display: grid;
+      grid-template-columns: 430px minmax(0, 1fr);
+      gap: 16px;
+      align-items: start;
     }
 
-    .card{
-      background: linear-gradient(180deg, rgba(16,26,51,.92), rgba(16,26,51,.70));
-      border:1px solid rgba(255,255,255,.10);
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
-      overflow:hidden;
-    }
-    body.contrast .card{
-      border-color: rgba(255,255,255,.14);
+      overflow: hidden;
     }
 
-    .header{
-      padding: 16px 18px 12px;
-      display:flex;
+    .header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
       justify-content: space-between;
       gap: 12px;
       align-items: center;
-      border-bottom: 1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, rgba(0,0,0,.18), transparent);
+      background: var(--panel-soft);
     }
 
-    .title-wrap{ display:flex; flex-direction:column; gap:4px; }
-    .title{
-      font-weight: 900;
-      letter-spacing: .02em;
-      font-size: 16px;
-      display:flex;
-      align-items:center;
-      gap:10px;
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 17px; line-height: 1.2; }
+    h2 { font-size: 14px; line-height: 1.2; }
+    .sub { color: var(--muted); font-size: 12px; margin-top: 3px; line-height: 1.3; }
+    .content { padding: 14px 16px 16px; }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
     }
-    .pill{
+
+    .step {
+      border: 1px solid var(--line);
+      background: var(--panel-soft);
+      border-radius: var(--radius);
+      padding: 9px;
+      color: var(--muted);
+      font-weight: 850;
+      font-size: 12px;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .step.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .section {
+      border-top: 1px solid var(--line);
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+
+    .section:first-child {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .section-title {
+      color: var(--muted);
       font-size: 11px;
       font-weight: 900;
-      letter-spacing:.10em;
+      letter-spacing: .08em;
       text-transform: uppercase;
-      padding: 6px 10px;
-      border-radius: 999px;
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.10);
-      color: var(--muted);
-      user-select:none;
-      white-space: nowrap;
-    }
-    .subtitle{
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.2;
-    }
-
-    .content{ padding: 14px 16px 16px; }
-
-    .toolbar{ display:flex; flex-wrap:wrap; gap:8px; justify-content:flex-end; align-items:center; }
-
-    button{
-      appearance:none;
-      border:none;
-      cursor:pointer;
-      border-radius: 12px;
-      padding: 10px 12px;
-      font-weight: 800;
-      color: var(--ink);
-      background: rgba(255,255,255,.08);
-      border: 1px solid rgba(255,255,255,.12);
-      box-shadow: var(--shadow-sm);
-      transition: transform .08s, background .2s, border-color .2s;
-      font-size: 12px;
-    }
-    button:hover{ transform: translateY(-1px); background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.18); }
-    button:active{ transform: translateY(0px); }
-
-    .btn-primary{
-      background: linear-gradient(180deg, rgba(111,38,61,.95), rgba(111,38,61,.72));
-      border-color: rgba(255,255,255,.14);
-    }
-    .btn-blue{
-      background: linear-gradient(180deg, rgba(35,97,146,.95), rgba(35,97,146,.72));
-      border-color: rgba(255,255,255,.14);
-    }
-    .btn-gold{
-      color:#1b1200;
-      background: linear-gradient(180deg, rgba(255,200,87,1), rgba(255,200,87,.72));
-      border-color: rgba(0,0,0,.18);
-    }
-
-    .seg{
-      display:flex;
-      border-radius: 14px;
-      overflow:hidden;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
-    }
-    .seg button{
-      border-radius:0;
-      border:none;
-      box-shadow:none;
-      background: transparent;
-      padding: 10px 12px;
-      font-weight: 900;
-    }
-    .seg button.active{
-      background: rgba(255,255,255,.14);
-      outline: 2px solid rgba(255,200,87,.25);
-      outline-offset: -2px;
-    }
-
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-
-    .kpis{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top: 10px;
-    }
-    .kpi{
-      flex: 1 1 120px;
-      background: rgba(0,0,0,.20);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      padding: 10px 12px;
-    }
-    .kpi .label{ color: var(--muted); font-size: 11px; font-weight: 900; letter-spacing:.08em; text-transform: uppercase; }
-    .kpi .val{ font-size: 18px; font-weight: 900; margin-top: 2px; }
-
-    .section-title{
-      margin: 14px 0 8px;
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing:.10em;
-      text-transform: uppercase;
-      color: var(--muted);
-      display:flex;
-      align-items:center;
+      margin-bottom: 8px;
+      display: flex;
       justify-content: space-between;
-      gap:10px;
+      gap: 10px;
+      align-items: center;
     }
 
-    textarea{
-      width: 100%;
-      min-height: 110px;
-      resize: vertical;
-      border-radius: 14px;
-      padding: 12px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
+    .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .grid-row.three { grid-template-columns: 1fr 1fr 1fr; }
+
+    button, input, select, textarea {
+      font: inherit;
       color: var(--ink);
-      outline:none;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 9px 10px;
+      font-weight: 850;
+      font-size: 12px;
+      cursor: pointer;
+      min-height: 36px;
+    }
+
+    button:hover { border-color: var(--accent); }
+    button.primary { background: var(--accent); border-color: var(--accent); color: white; }
+    button.warning { background: var(--gold); border-color: var(--gold); color: #211600; }
+    button.danger { color: var(--danger); }
+    button.active { background: var(--accent); border-color: var(--accent); color: white; }
+    button:focus-visible, input:focus, select:focus, textarea:focus {
+      outline: 3px solid var(--focus);
+      outline-offset: 1px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      border-radius: var(--radius);
+      padding: 9px 10px;
+      font-size: 13px;
+      min-height: 36px;
+    }
+
+    textarea {
+      min-height: 92px;
+      resize: vertical;
       line-height: 1.35;
     }
-    textarea:focus{ box-shadow: 0 0 0 3px var(--focus); }
 
-    input[type="text"], select, input[type="range"]{
-      border-radius: 12px;
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      color: var(--ink);
-      outline:none;
-      font-weight: 800;
-      padding: 10px 10px;
-    }
-    input[type="text"]:focus, select:focus{ box-shadow: 0 0 0 3px var(--focus); }
-    input[type="range"]{ padding: 10px 6px; }
-
-    .hint{
-      margin-top: 10px;
+    label {
+      display: grid;
+      gap: 5px;
       color: var(--muted);
-      font-size: 12px;
-      line-height: 1.25;
-    }
-    .hint b{ color: var(--ink); }
-
-    .warn{
-      margin-top: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(255,200,87,.12);
-      border: 1px solid rgba(255,200,87,.22);
-      color: #ffe9bf;
-      font-size: 12px;
-      line-height: 1.25;
-      display:none;
-    }
-    .warn.show{ display:block; }
-
-    .student-list{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      max-height: 340px;
-      overflow:auto;
-      padding-right: 4px;
-    }
-    .student-row{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      background: rgba(0,0,0,.18);
-      border:1px solid rgba(255,255,255,.08);
-      border-radius: 14px;
-      padding: 8px 8px;
-    }
-    .chip{
-      width: 34px;
-      height: 34px;
-      border-radius: 999px;
-      background: rgba(35,97,146,.95);
-      border:1px solid rgba(255,255,255,.14);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      font-weight: 900;
-      font-size: 12px;
-      user-select:none;
-      flex: 0 0 auto;
-    }
-    .student-row input{
-      flex:1 1 auto;
-      padding: 9px 10px;
-      border-radius: 12px;
-      font-weight: 900;
-    }
-    .mini{
-      padding: 9px 10px;
-      font-size: 12px;
-      border-radius: 12px;
-      box-shadow:none;
-    }
-
-    /* Stage / classroom */
-    .front-banner{
-      display:flex;
-      align-items:center;
-      gap: 10px;
-      padding: 10px 12px;
-      border-radius: 14px;
-      background: rgba(255,255,255,.07);
-      border: 1px solid rgba(255,255,255,.10);
-      color: var(--muted);
-      font-weight: 900;
-      letter-spacing: .10em;
-      text-transform: uppercase;
       font-size: 11px;
-      user-select:none;
-      white-space:nowrap;
+      font-weight: 850;
+      letter-spacing: .03em;
     }
-    .front-banner .bar{
-      width: 12px;
-      height: 12px;
+
+    .check {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 750;
+      letter-spacing: 0;
+    }
+
+    .check input {
+      width: auto;
+      min-height: auto;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .kpi {
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 8px;
+    }
+
+    .kpi .label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+
+    .kpi .value {
+      font-size: 18px;
+      font-weight: 900;
+      margin-top: 2px;
+    }
+
+    .notice {
+      display: none;
+      border-radius: var(--radius);
+      padding: 9px 10px;
+      background: #fff6df;
+      border: 1px solid #f2d38a;
+      color: #6b4a00;
+      font-size: 12px;
+      line-height: 1.3;
+      margin: 8px 0 0;
+    }
+
+    body.dark .notice {
+      background: rgba(241, 191, 88, .14);
+      color: #f7dfae;
+      border-color: rgba(241, 191, 88, .35);
+    }
+
+    .notice.show { display: block; }
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 8px;
+    }
+
+    .student-list {
+      max-height: 380px;
+      overflow: auto;
+      display: grid;
+      gap: 7px;
+      padding-right: 2px;
+    }
+
+    .student-row {
+      display: grid;
+      grid-template-columns: 26px 1fr auto auto;
+      gap: 7px;
+      align-items: center;
+      background: var(--panel-soft);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 7px;
+    }
+
+    .student-row.locked { border-color: var(--gold); }
+    .student-row .num {
+      width: 26px;
+      height: 26px;
       border-radius: 999px;
-      background: var(--gold);
-      box-shadow: 0 0 0 3px rgba(255,200,87,.18);
+      display: grid;
+      place-items: center;
+      background: var(--accent);
+      color: white;
+      font-weight: 900;
+      font-size: 11px;
     }
 
-    .grid-wrap{ padding: 16px; }
+    .student-meta {
+      grid-column: 2 / -1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 7px;
+      margin-top: 2px;
+    }
 
-    .grid{
-      display:grid;
+    .student-meta input, .student-meta select { font-size: 12px; min-height: 32px; padding: 7px 8px; }
+
+    .stage-tools {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .front {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 9px 12px;
+      color: var(--muted);
+      background: var(--panel);
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .chart-meta {
+      display: grid;
+      grid-template-columns: 1.4fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .grid-wrap {
+      overflow: auto;
+      padding: 16px;
+    }
+
+    .classroom {
+      min-width: max-content;
+      display: grid;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .grid {
+      display: grid;
       grid-template-columns: repeat(10, var(--cell));
       grid-auto-rows: var(--cell);
       gap: var(--gap);
-      justify-content:center;
+      justify-content: center;
       padding: 12px;
-      border-radius: 22px;
-      background: rgba(0,0,0,.20);
-      border: 1px solid rgba(255,255,255,.10);
-      position: relative;
-      user-select:none;
-      overflow:auto;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: var(--panel-soft);
+      user-select: none;
     }
 
-    .cell{
+    .cell {
       width: var(--cell);
       height: var(--cell);
-      border-radius: 16px;
-      background: var(--cell-bg);
-      border: 1px dashed var(--cell-border);
+      border: 1px dashed var(--line);
+      border-radius: var(--radius);
+      background: transparent;
       position: relative;
-      transition: background .12s, border-color .12s, transform .06s;
-    }
-    .cell:hover{
-      border-color: rgba(255,200,87,.28);
+      display: grid;
+      place-items: center;
+      transition: outline .12s, transform .08s, background .12s;
     }
 
-    .cell.desk{
-      background: linear-gradient(180deg, var(--desk-bg-1), var(--desk-bg-2));
+    .cell:hover { outline: 3px solid var(--focus); outline-offset: 0; }
+    .cell.desk {
+      background: var(--desk);
       border: 1px solid var(--desk-border);
+      box-shadow: inset 0 -8px 0 rgba(23, 32, 42, .04);
     }
 
-    .cell.path{
-      background: var(--path-bg);
-      border: 1px solid var(--path-border);
-      border-radius: 14px;
+    .cell.path {
+      background: var(--path);
+      border: 1px solid var(--line);
     }
 
-    /* Bridges for path merging */
-    .bridge{
-      position:absolute;
-      pointer-events:none;
-      background: var(--path-bg);
-    }
-    .bridge.r{
-      top: 0;
-      right: calc(var(--gap) * -1);
-      width: var(--gap);
-      height: 100%;
-      border-top: 1px solid var(--path-border);
-      border-bottom: 1px solid var(--path-border);
-    }
-    .bridge.l{
-      top: 0;
-      left: calc(var(--gap) * -1);
-      width: var(--gap);
-      height: 100%;
-      border-top: 1px solid var(--path-border);
-      border-bottom: 1px solid var(--path-border);
-    }
-    .bridge.t{
-      left: 0;
-      top: calc(var(--gap) * -1);
-      height: var(--gap);
-      width: 100%;
-      border-left: 1px solid var(--path-border);
-      border-right: 1px solid var(--path-border);
-    }
-    .bridge.b{
-      left: 0;
-      bottom: calc(var(--gap) * -1);
-      height: var(--gap);
-      width: 100%;
-      border-left: 1px solid var(--path-border);
-      border-right: 1px solid var(--path-border);
+    .cell.selected-seat { outline: 3px solid var(--gold); }
+    .cell.previous-seat::after {
+      content: "prev";
+      position: absolute;
+      bottom: 4px;
+      right: 5px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
     }
 
-    .cell.desk:hover{ transform: translateY(-1px); }
-    .cell.selected-seat{ outline: 3px solid var(--focus); outline-offset: 2px; }
-
-    .token{
-      position:absolute;
-      inset: 8px;
+    .seat-label {
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      max-width: calc(100% - 10px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       border-radius: 999px;
-      background: linear-gradient(180deg, rgba(35,97,146,1), rgba(35,97,146,.72));
-      border: 1px solid rgba(255,255,255,.18);
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      padding: 8px;
-      text-align:center;
-      font-weight: 950;
-      color: #fff;
+      background: rgba(23, 32, 42, .08);
+      color: var(--muted);
+      padding: 2px 6px;
+      font-size: var(--label-font);
+      font-weight: 900;
+      line-height: 1.2;
+      pointer-events: none;
+    }
+
+    .token {
+      width: calc(100% - 14px);
+      min-height: 34px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: white;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 6px 8px;
       font-size: var(--token-font);
+      font-weight: 900;
       line-height: 1.05;
       cursor: grab;
-      box-shadow: 0 10px 22px rgba(0,0,0,.25);
-      user-select:none;
+      word-break: break-word;
     }
-    .token:active{ cursor: grabbing; }
-    .token.selected{
-      outline: 3px solid var(--focus);
+
+    .token.locked {
+      background: var(--gold);
+      color: #251900;
+    }
+
+    .token.selected {
+      outline: 3px solid var(--gold);
       outline-offset: 2px;
     }
 
-    /* Seat label */
-    .seat-label{
-      position:absolute;
-      top: 6px;
-      left: 8px;
-      padding: 3px 7px;
-      border-radius: 999px;
-      background: rgba(0,0,0,.30);
-      border: 1px solid rgba(255,255,255,.16);
-      font-weight: 950;
-      font-size: var(--label-font);
-      letter-spacing: .02em;
-      color: rgba(255,255,255,.92);
-      max-width: calc(100% - 14px);
-      overflow:hidden;
-      text-overflow: ellipsis;
-      white-space:nowrap;
-      pointer-events:none;
-    }
-    body.contrast .seat-label{
-      background: rgba(0,0,0,.40);
-      border-color: rgba(255,255,255,.20);
+    .path .token, .cell:not(.desk) .token { display: none; }
+
+    .print-student .teacher-only { display: none !important; }
+    .print-light {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --panel-soft: #ffffff;
+      --ink: #111111;
+      --muted: #555555;
+      --line: #c8c8c8;
+      --desk: #ffffff;
+      --desk-border: #777777;
+      --path: #eeeeee;
+      --accent: #111111;
+      --gold: #e5b849;
+      --shadow: none;
     }
 
-    .slider-row{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      width:100%;
-    }
-    .slider-row .lbl{
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      letter-spacing:.08em;
-      text-transform: uppercase;
-      width: 100px;
-      flex: 0 0 auto;
-    }
-    .slider-row .val{
-      color: var(--muted);
-      font-size: 12px;
-      font-weight: 900;
-      width: 44px;
-      text-align:right;
-      flex: 0 0 auto;
-    }
-    .slider-row input[type="range"]{
-      flex: 1 1 auto;
-      height: 38px;
+    @media (max-width: 1100px) {
+      body { padding: 10px; }
+      .app { grid-template-columns: 1fr; }
+      .chart-meta { grid-template-columns: 1fr; }
     }
 
-    @media (max-width: 1080px){
-      .app{ grid-template-columns: 1fr; }
-      .grid{ justify-content: flex-start; }
+    @media print {
+      body { background: white; color: #111; padding: 0; }
+      .app { display: block; max-width: none; }
+      .controls { display: none; }
+      .panel { box-shadow: none; border: 0; }
+      .stage .header { border-bottom: 1px solid #bbb; }
+      .grid-wrap { overflow: visible; padding: 12px 0; }
+      button { display: none; }
     }
   </style>
 </head>
-
 <body>
-  <div class="app">
-    <!-- LEFT -->
-    <div class="card">
+  <main class="app">
+    <aside class="panel controls">
       <div class="header">
-        <div class="title-wrap">
-          <div class="title">
-            Seating Tools <span class="pill" id="modePill">LAYOUT MODE</span>
-          </div>
-          <div class="subtitle">Hold-to-paint desks & pathways. Bigger, readable names. Seat labels included.</div>
+        <div>
+          <h1>Seating Tools</h1>
+          <p class="sub">Build the room, add the roster, then seat the class.</p>
         </div>
-        <div class="toolbar">
-          <div class="seg" role="tablist" aria-label="Mode">
-            <button id="btnLayout" class="active" type="button">Layout</button>
-            <button id="btnSeating" type="button">Seating</button>
-          </div>
-          <button id="btnUndo" type="button">Undo</button>
-        </div>
+        <button id="undoBtn" type="button" title="Undo last change">Undo</button>
       </div>
-
       <div class="content">
+        <div class="steps">
+          <button class="step active" id="stepBuild" type="button">1. Build room</button>
+          <button class="step" id="stepRoster" type="button">2. Add roster</button>
+          <button class="step" id="stepSeat" type="button">3. Seat</button>
+        </div>
+
         <div class="kpis">
-          <div class="kpi"><div class="label">Desks</div><div class="val" id="kpiDesks">0</div></div>
-          <div class="kpi"><div class="label">Students</div><div class="val" id="kpiStudents">0</div></div>
-          <div class="kpi"><div class="label">Unseated</div><div class="val" id="kpiUnseated">0</div></div>
+          <div class="kpi"><div class="label">Desks</div><div class="value" id="deskCount">0</div></div>
+          <div class="kpi"><div class="label">Students</div><div class="value" id="studentCount">0</div></div>
+          <div class="kpi"><div class="label">Seated</div><div class="value" id="seatedCount">0</div></div>
+          <div class="kpi"><div class="label">Open</div><div class="value" id="openCount">0</div></div>
         </div>
+        <div class="notice" id="notice"></div>
 
-        <div id="warnBox" class="warn"></div>
-
-        <div class="section-title">Layout tools</div>
-
-        <div class="row" style="margin-bottom:10px;">
-          <div class="seg" aria-label="Paint tool">
-            <button id="toolDesk" class="active" type="button">Desks</button>
-            <button id="toolPath" type="button">Pathways</button>
+        <section class="section" data-section="build">
+          <div class="section-title">Room Layout</div>
+          <div class="grid-row three">
+            <label>Rows <input id="rowsInput" type="number" min="3" max="16" value="8" /></label>
+            <label>Columns <input id="colsInput" type="number" min="3" max="18" value="10" /></label>
+            <label>Preset
+              <select id="presetSelect">
+                <option value="rows">Rows</option>
+                <option value="pods">Pods</option>
+                <option value="u">U-shape</option>
+                <option value="lab">Lab tables</option>
+                <option value="blank">Blank</option>
+              </select>
+            </label>
           </div>
-          <button id="btnClearSeats" type="button">Clear seats</button>
-          <button id="btnClearDesks" type="button">Clear desks</button>
-        </div>
+          <div class="row" style="margin-top:8px">
+            <button class="primary" id="applyPresetBtn" type="button">Apply preset</button>
+            <button id="autoLabelBtn" type="button">Auto-label desks</button>
+            <button id="clearRoomBtn" type="button">Clear room</button>
+          </div>
 
-        <div class="row" style="margin-bottom:10px;">
-          <button class="btn-blue" id="btnHighContrast" type="button">High contrast: OFF</button>
-        </div>
+          <div class="section-title" style="margin-top:12px">Paint Tool</div>
+          <div class="row">
+            <button id="deskToolBtn" class="active" type="button">Desk</button>
+            <button id="pathToolBtn" type="button">Pathway</button>
+            <button id="eraseToolBtn" type="button">Erase</button>
+          </div>
+          <p class="hint">Drag across the grid to paint. Double-click a desk to edit its label.</p>
+        </section>
 
-        <div class="slider-row" style="margin-bottom:10px;">
-          <div class="lbl">Legibility</div>
-          <input id="legibility" type="range" min="0" max="100" value="55" />
-          <div class="val" id="legibilityVal">55</div>
-        </div>
+        <section class="section" data-section="roster">
+          <div class="section-title">Paste Roster</div>
+          <textarea id="pasteBox" placeholder="Paste names here. One per line is best; commas and semicolons also work."></textarea>
+          <div class="row" style="margin-top:8px">
+            <select id="pasteMode" style="max-width:130px">
+              <option value="replace">Replace</option>
+              <option value="add">Add</option>
+            </select>
+            <button class="primary" id="applyPasteBtn" type="button">Apply roster</button>
+          </div>
+          <p class="hint" id="importStatus">No roster imported yet.</p>
 
-        <div class="hint" id="hint">
-          <b>Layout mode:</b> hold mouse down and drag to paint <b id="paintThing">desks</b>. Release mouse to stop. Press <b>Esc</b> to cancel painting.<br/>
-          <b>Seat labels:</b> double-click a desk to edit its label.
-        </div>
+          <div class="section-title" style="margin-top:12px">Add And Find</div>
+          <div class="row">
+            <input id="addNameInput" type="text" placeholder="Add a student and press Enter" style="flex:1 1 190px" />
+            <button class="primary" id="addStudentBtn" type="button">Add</button>
+          </div>
+          <div class="grid-row" style="margin-top:8px">
+            <input id="searchInput" type="text" placeholder="Search roster" />
+            <select id="filterSelect">
+              <option value="all">Show all</option>
+              <option value="unseated">Unseated only</option>
+              <option value="locked">Locked only</option>
+              <option value="front">Front row needs</option>
+              <option value="notes">Has notes</option>
+            </select>
+          </div>
+        </section>
 
-        <div class="section-title">Paste roster</div>
-        <textarea id="pasteBox" placeholder="Paste names here (one per line is best).
-Commas and semicolons also work."></textarea>
+        <section class="section" data-section="seat">
+          <div class="section-title">Seating Actions</div>
+          <div class="row">
+            <button class="primary" id="fillEmptyBtn" type="button">Seat unseated</button>
+            <button class="primary" id="reshuffleBtn" type="button">Reshuffle unlocked</button>
+            <button id="swapModeBtn" type="button">Swap mode: Off</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <label class="check"><input id="avoidPreviousInput" type="checkbox" checked /> Avoid previous seats</label>
+            <button id="savePreviousBtn" type="button">Save current as previous</button>
+            <button id="clearSeatsBtn" type="button">Clear unlocked seats</button>
+          </div>
+          <p class="hint">Lock students you do not want moved. Tags such as front, back, window, and door guide the next shuffle.</p>
+        </section>
 
-        <div class="row" style="margin-top:10px;">
-          <select id="pasteMode" style="max-width: 150px;">
-            <option value="replace">Replace</option>
-            <option value="add">Add</option>
-          </select>
-          <button class="btn-blue" id="btnApplyPaste" type="button">Apply</button>
-          <button id="btnShowUnseated" type="button">Show unseated only</button>
-        </div>
+        <section class="section">
+          <div class="section-title">Roster</div>
+          <div class="student-list" id="studentList"></div>
+        </section>
 
-        <div class="section-title">Roster</div>
-
-        <div class="row" style="margin-bottom:10px;">
-          <input id="addName" type="text" placeholder="Add a student (press Enter)" style="flex:1 1 auto;" />
-          <button class="btn-primary" id="btnAdd" type="button">Add</button>
-        </div>
-
-        <div class="student-list" id="studentList"></div>
-
-        <div class="section-title">Actions</div>
-        <div class="row">
-          <button class="btn-primary" id="btnRandomFill" type="button">Randomize (fill empty)</button>
-          <button class="btn-primary" id="btnRandomAll" type="button">Randomize (reshuffle all)</button>
-        </div>
-
-        <div class="section-title">Export</div>
-        <div class="row">
-          <button class="btn-gold" id="btnExportPNG" type="button">Export PNG</button>
-          <button class="btn-gold" id="btnExportCSV" type="button">Export CSV</button>
-          <button id="btnResetAll" type="button">Reset all</button>
-        </div>
+        <section class="section">
+          <div class="section-title">Look And Export</div>
+          <div class="grid-row">
+            <label>Legibility <input id="legibilityInput" type="range" min="0" max="100" value="50" /></label>
+            <label>Version
+              <select id="versionSelect">
+                <option value="teacher">Teacher</option>
+                <option value="student">Student-facing</option>
+              </select>
+            </label>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="themeBtn" type="button">Dark mode: Off</button>
+            <button id="printThemeBtn" type="button">Print theme: Off</button>
+            <button class="warning" id="exportPngBtn" type="button">Export PNG</button>
+            <button class="warning" id="exportCsvBtn" type="button">Export CSV</button>
+            <button id="printBtn" type="button">Print</button>
+            <button class="danger" id="resetBtn" type="button">Reset all</button>
+          </div>
+        </section>
       </div>
-    </div>
+    </aside>
 
-    <!-- RIGHT -->
-    <div class="card" id="stageCard">
+    <section class="panel stage" id="chartPanel">
       <div class="header">
-        <div class="title-wrap">
-          <div class="title">Classroom</div>
-          <div class="subtitle">8×10 grid. Pathways merge. Desk labels scale with legibility.</div>
+        <div>
+          <h2 id="chartTitleView">Classroom Seating Chart</h2>
+          <p class="sub"><span id="teacherView">Teacher</span> <span id="dateView"></span></p>
         </div>
-        <div class="front-banner" title="Front of class">
-          <span class="bar"></span> Front of class
+        <div class="stage-tools">
+          <div class="front">Front of class</div>
         </div>
       </div>
-
       <div class="grid-wrap">
-        <div class="grid" id="grid" aria-label="Seating grid"></div>
+        <div class="chart-meta controls">
+          <input id="chartTitleInput" type="text" placeholder="Chart title" value="Classroom Seating Chart" />
+          <input id="teacherInput" type="text" placeholder="Teacher / class period" />
+          <input id="dateInput" type="date" />
+        </div>
+        <div class="classroom">
+          <div class="grid" id="grid" aria-label="Seating grid"></div>
+          <p class="hint teacher-only" id="teacherNotesView"></p>
+        </div>
       </div>
-    </div>
-  </div>
+    </section>
+  </main>
 
-<script>
-(() => {
-  const STORAGE_KEY = "geffen_seating_chart_v3";
+  <script>
+    (() => {
+      const STORAGE_KEY = "seating_chart_generator_v5";
+      const state = {
+        step: "build",
+        tool: "desk",
+        rows: 8,
+        cols: 10,
+        desks: new Set(),
+        paths: new Set(),
+        labels: new Map(),
+        students: [],
+        placements: new Map(),
+        previousPlacements: new Map(),
+        selectedStudentId: null,
+        swapMode: false,
+        swapFirstId: null,
+        printTheme: false,
+        dark: false,
+        version: "teacher",
+        chartTitle: "Classroom Seating Chart",
+        teacher: "",
+        date: new Date().toISOString().slice(0, 10),
+        avoidPrevious: true,
+        legibility: 50
+      };
+      const history = [];
+      let isPainting = false;
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        grid: $("grid"),
+        list: $("studentList"),
+        notice: $("notice"),
+        importStatus: $("importStatus")
+      };
+      const keyOf = (r, c) => `${r},${c}`;
+      const parseKey = (key) => {
+        const [r, c] = key.split(",").map(Number);
+        return { r, c };
+      };
+      const uid = () => `s_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
 
-  const state = {
-    mode: "layout", // layout | seating
-    grid: { rows: 8, cols: 10 },
+      function cloneState() {
+        return {
+          ...state,
+          desks: new Set(state.desks),
+          paths: new Set(state.paths),
+          labels: new Map(state.labels),
+          students: state.students.map((s) => ({ ...s })),
+          placements: new Map(state.placements),
+          previousPlacements: new Map(state.previousPlacements)
+        };
+      }
 
-    desks: new Set(),         // "r,c"
-    paths: new Set(),         // "r,c"
-    labels: new Map(),        // deskKey -> label
+      function pushHistory() {
+        history.push(cloneState());
+        if (history.length > 30) history.shift();
+      }
 
-    students: [],             // {id, name}
-    placements: new Map(),    // deskKey -> studentId
-    selectedStudentId: null,
+      function restore(snapshot) {
+        Object.assign(state, snapshot);
+        state.desks = new Set(snapshot.desks);
+        state.paths = new Set(snapshot.paths);
+        state.labels = new Map(snapshot.labels);
+        state.students = snapshot.students.map((s) => ({ ...s }));
+        state.placements = new Map(snapshot.placements);
+        state.previousPlacements = new Map(snapshot.previousPlacements);
+      }
 
-    showUnseatedOnly: false,
-    paintTool: "desk"         // desk | path
-  };
+      function serialize() {
+        return JSON.stringify({
+          ...state,
+          desks: [...state.desks],
+          paths: [...state.paths],
+          labels: [...state.labels],
+          placements: [...state.placements],
+          previousPlacements: [...state.previousPlacements]
+        });
+      }
 
-  let lastSnapshot = null;
+      function save() {
+        localStorage.setItem(STORAGE_KEY, serialize());
+      }
 
-  // Painting state (hold-to-paint)
-  let isPainting = false;
-  let paintWillAdd = true;
-
-  const gridEl = document.getElementById("grid");
-  const studentListEl = document.getElementById("studentList");
-
-  const kpiDesks = document.getElementById("kpiDesks");
-  const kpiStudents = document.getElementById("kpiStudents");
-  const kpiUnseated = document.getElementById("kpiUnseated");
-  const warnBox = document.getElementById("warnBox");
-
-  const btnLayout = document.getElementById("btnLayout");
-  const btnSeating = document.getElementById("btnSeating");
-  const modePill = document.getElementById("modePill");
-  const btnUndo = document.getElementById("btnUndo");
-
-  const toolDesk = document.getElementById("toolDesk");
-  const toolPath = document.getElementById("toolPath");
-  const paintThing = document.getElementById("paintThing");
-
-  const btnHighContrast = document.getElementById("btnHighContrast");
-  const legibility = document.getElementById("legibility");
-  const legibilityVal = document.getElementById("legibilityVal");
-
-  const pasteBox = document.getElementById("pasteBox");
-  const pasteMode = document.getElementById("pasteMode");
-  const btnApplyPaste = document.getElementById("btnApplyPaste");
-  const btnShowUnseated = document.getElementById("btnShowUnseated");
-
-  const addName = document.getElementById("addName");
-  const btnAdd = document.getElementById("btnAdd");
-
-  const btnRandomFill = document.getElementById("btnRandomFill");
-  const btnRandomAll = document.getElementById("btnRandomAll");
-  const btnClearSeats = document.getElementById("btnClearSeats");
-  const btnClearDesks = document.getElementById("btnClearDesks");
-
-  const btnExportPNG = document.getElementById("btnExportPNG");
-  const btnExportCSV = document.getElementById("btnExportCSV");
-  const btnResetAll = document.getElementById("btnResetAll");
-
-  // Utilities
-  const keyOf = (r,c) => `${r},${c}`;
-  const parseKey = (k) => {
-    const [r,c] = k.split(",").map(n => parseInt(n,10));
-    return {r,c};
-  };
-
-  function uid(){
-    return "s_" + Math.random().toString(16).slice(2) + Date.now().toString(16);
-  }
-
-  function snapshot(){
-    lastSnapshot = {
-      mode: state.mode,
-      grid: {...state.grid},
-      desks: new Set([...state.desks]),
-      paths: new Set([...state.paths]),
-      labels: new Map([...state.labels.entries()]),
-      students: state.students.map(s => ({...s})),
-      placements: new Map([...state.placements.entries()]),
-      selectedStudentId: state.selectedStudentId,
-      showUnseatedOnly: state.showUnseatedOnly,
-      paintTool: state.paintTool,
-      contrast: document.body.classList.contains("contrast"),
-      legibility: Number(legibility.value)
-    };
-  }
-
-  function restoreSnapshot(){
-    if(!lastSnapshot) return;
-    state.mode = lastSnapshot.mode;
-    state.grid = {...lastSnapshot.grid};
-    state.desks = new Set([...lastSnapshot.desks]);
-    state.paths = new Set([...lastSnapshot.paths]);
-    state.labels = new Map([...lastSnapshot.labels.entries()]);
-    state.students = lastSnapshot.students.map(s => ({...s}));
-    state.placements = new Map([...lastSnapshot.placements.entries()]);
-    state.selectedStudentId = lastSnapshot.selectedStudentId;
-    state.showUnseatedOnly = lastSnapshot.showUnseatedOnly;
-    state.paintTool = lastSnapshot.paintTool;
-
-    document.body.classList.toggle("contrast", !!lastSnapshot.contrast);
-    setLegibility(lastSnapshot.legibility);
-
-    lastSnapshot = null;
-    renderAll(true);
-  }
-
-  function save(){
-    const payload = {
-      mode: state.mode,
-      grid: state.grid,
-      desks: [...state.desks],
-      paths: [...state.paths],
-      labels: [...state.labels.entries()],
-      students: state.students,
-      placements: [...state.placements.entries()],
-      showUnseatedOnly: state.showUnseatedOnly,
-      paintTool: state.paintTool,
-      contrast: document.body.classList.contains("contrast"),
-      legibility: Number(legibility.value)
-    };
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-  }
-
-  function load(){
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(!raw) return;
-    try{
-      const p = JSON.parse(raw);
-      state.mode = p.mode || "layout";
-      state.grid = p.grid || {rows:8, cols:10};
-      state.desks = new Set(p.desks || []);
-      state.paths = new Set(p.paths || []);
-      state.labels = new Map(p.labels || []);
-      state.students = Array.isArray(p.students) ? p.students : [];
-      state.placements = new Map(p.placements || []);
-      state.showUnseatedOnly = !!p.showUnseatedOnly;
-      state.paintTool = p.paintTool || "desk";
-
-      document.body.classList.toggle("contrast", !!p.contrast);
-      setLegibility(typeof p.legibility === "number" ? p.legibility : 55);
-
-      // cleanup invalid placements
-      const validIds = new Set(state.students.map(s => s.id));
-      for(const [dk, sid] of state.placements.entries()){
-        if(!state.desks.has(dk) || !validIds.has(sid)){
-          state.placements.delete(dk);
+      function load() {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        try {
+          const p = JSON.parse(raw);
+          Object.assign(state, p);
+          state.desks = new Set(p.desks || []);
+          state.paths = new Set(p.paths || []);
+          state.labels = new Map(p.labels || []);
+          state.placements = new Map(p.placements || []);
+          state.previousPlacements = new Map(p.previousPlacements || []);
+          state.students = Array.isArray(p.students) ? p.students : [];
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
         }
       }
 
-      // ensure a cell cannot be both desk and path
-      for(const k of [...state.desks]){
-        if(state.paths.has(k)) state.paths.delete(k);
+      function normalizeNames(text) {
+        const seen = new Set();
+        return text.split(/\n|,|;/g).map((v) => v.trim()).filter(Boolean).filter((name) => {
+          const key = name.toLowerCase();
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
       }
-    }catch(e){
-      console.warn("Load failed", e);
-    }
-  }
 
-  function normalizeNames(text){
-    const parts = text
-      .split(/\n|,|;/g)
-      .map(s => s.trim())
-      .filter(Boolean);
+      function compactName(name) {
+        const clean = name.trim();
+        if (clean.length <= 18) return clean;
+        const parts = clean.split(/\s+/);
+        if (parts.length > 1) return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+        return `${clean.slice(0, 16)}...`;
+      }
 
-    const seen = new Set();
-    const out = [];
-    for(const n of parts){
-      const k = n.toLowerCase();
-      if(seen.has(k)) continue;
-      seen.add(k);
-      out.push(n);
-    }
-    return out;
-  }
+      function getStudent(id) {
+        return state.students.find((s) => s.id === id);
+      }
 
-  function getSeatedSet(){
-    return new Set([...state.placements.values()]);
-  }
-  function getUnseatedStudents(){
-    const seated = getSeatedSet();
-    return state.students.filter(s => !seated.has(s.id));
-  }
+      function getSeatOf(studentId, map = state.placements) {
+        for (const [desk, id] of map.entries()) if (id === studentId) return desk;
+        return "";
+      }
 
-  function warn(msg){
-    if(!msg){
-      warnBox.classList.remove("show");
-      warnBox.textContent = "";
-      return;
-    }
-    warnBox.textContent = msg;
-    warnBox.classList.add("show");
-  }
+      function getSeatedIds() {
+        return new Set([...state.placements.values()]);
+      }
 
-  function compactName(name){
-    const n = name.trim();
-    // keep it readable, but we’re also increasing token size now
-    if(n.length <= 18) return n;
-    const parts = n.split(/\s+/);
-    if(parts.length >= 2){
-      const first = parts[0];
-      const last = parts[parts.length-1];
-      return `${first} ${last[0]}.`;
-    }
-    return n.slice(0, 16) + "…";
-  }
+      function inBounds(r, c) {
+        return r >= 0 && c >= 0 && r < state.rows && c < state.cols;
+      }
 
-  // Legibility mapping
-  function setLegibility(val){
-    const v = Math.max(0, Math.min(100, Number(val)));
-    legibility.value = String(v);
-    legibilityVal.textContent = String(v);
+      function zoneScore(student, desk) {
+        const { r, c } = parseKey(desk);
+        let score = 0;
+        if (student.behavior === "support") score += r * .7;
+        if (!student.zone || student.zone === "any") return score;
+        if (student.zone === "front") score += r;
+        if (student.zone === "back") score += Math.abs((state.rows - 1) - r);
+        if (student.zone === "window") score += c;
+        if (student.zone === "door") score += Math.abs((state.cols - 1) - c);
+        return score;
+      }
 
-    // Seat size: 56 -> 92
-    const cell = Math.round(56 + (92 - 56) * (v / 100));
+      function adjacent(a, b) {
+        if (!a || !b) return false;
+        const pa = parseKey(a);
+        const pb = parseKey(b);
+        return Math.abs(pa.r - pb.r) + Math.abs(pa.c - pb.c) === 1;
+      }
 
-    // Token font: 12 -> 18
-    const tokenFont = Math.round(12 + (18 - 12) * (v / 100));
+      function updateCss() {
+        const v = Number(state.legibility);
+        const cell = Math.round(58 + (92 - 58) * (v / 100));
+        const tokenFont = Math.round(11 + (17 - 11) * (v / 100));
+        const labelFont = Math.round(9 + (14 - 9) * (v / 100));
+        const gap = Math.round(6 + (10 - 6) * (v / 100));
+        document.documentElement.style.setProperty("--cell", `${cell}px`);
+        document.documentElement.style.setProperty("--token-font", `${tokenFont}px`);
+        document.documentElement.style.setProperty("--label-font", `${labelFont}px`);
+        document.documentElement.style.setProperty("--gap", `${gap}px`);
+        document.body.classList.toggle("dark", state.dark);
+        document.body.classList.toggle("print-light", state.printTheme);
+        $("chartPanel").classList.toggle("print-student", state.version === "student");
+      }
 
-    // Label font: 10 -> 15
-    const labelFont = Math.round(10 + (15 - 10) * (v / 100));
-
-    document.documentElement.style.setProperty("--cell", `${cell}px`);
-    document.documentElement.style.setProperty("--token-font", `${tokenFont}px`);
-    document.documentElement.style.setProperty("--label-font", `${labelFont}px`);
-
-    // Small tweak: if seats are huge, slightly increase gap so it breathes
-    const gap = Math.round(7 + (10 - 7) * (v / 100));
-    document.documentElement.style.setProperty("--gap", `${gap}px`);
-
-    save();
-    renderAll(true);
-  }
-
-  // Rendering
-  function renderModeUI(){
-    btnLayout.classList.toggle("active", state.mode === "layout");
-    btnSeating.classList.toggle("active", state.mode === "seating");
-    modePill.textContent = state.mode === "layout" ? "LAYOUT MODE" : "SEATING MODE";
-
-    toolDesk.classList.toggle("active", state.paintTool === "desk");
-    toolPath.classList.toggle("active", state.paintTool === "path");
-
-    paintThing.textContent = state.paintTool === "desk" ? "desks" : "pathways";
-  }
-
-  function updateKPIs(){
-    const deskCount = state.desks.size;
-    const studentCount = state.students.length;
-    const seatedCount = getSeatedSet().size;
-    const unseatedCount = Math.max(0, studentCount - seatedCount);
-
-    kpiDesks.textContent = deskCount;
-    kpiStudents.textContent = studentCount;
-    kpiUnseated.textContent = unseatedCount;
-
-    if(studentCount > deskCount){
-      warn(`You have ${studentCount} students but only ${deskCount} desks. (${studentCount - deskCount} will remain unseated.)`);
-    }else{
-      warn("");
-    }
-  }
-
-  function makeToken(student){
-    const token = document.createElement("div");
-    token.className = "token";
-    token.draggable = (state.mode === "seating");
-    token.dataset.sid = student.id;
-
-    token.textContent = compactName(student.name);
-    token.title = student.name;
-
-    token.addEventListener("dragstart", (e) => {
-      if(state.mode !== "seating") { e.preventDefault(); return; }
-      e.dataTransfer.setData("text/student-id", student.id);
-    });
-
-    token.addEventListener("click", (e) => {
-      if(state.mode !== "seating") return;
-      e.stopPropagation();
-      state.selectedStudentId = student.id;
-      renderAll();
-      save();
-    });
-
-    return token;
-  }
-
-  function renderRoster(){
-    studentListEl.innerHTML = "";
-    const seated = getSeatedSet();
-    const unseated = getUnseatedStudents();
-    const list = state.showUnseatedOnly ? unseated : state.students;
-
-    list.forEach((s, idx) => {
-      const row = document.createElement("div");
-      row.className = "student-row";
-
-      const chip = document.createElement("div");
-      chip.className = "chip";
-      chip.textContent = String(idx + 1);
-
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = s.name;
-
-      input.addEventListener("change", () => {
-        snapshot();
-        s.name = input.value.trim() || s.name;
-        renderAll();
-        save();
-      });
-
-      const seatBtn = document.createElement("button");
-      seatBtn.type = "button";
-      seatBtn.className = "mini";
-      seatBtn.textContent = seated.has(s.id) ? "Seated" : "Pick";
-      seatBtn.style.opacity = seated.has(s.id) ? 0.75 : 1;
-
-      seatBtn.addEventListener("click", () => {
-        if(state.mode !== "seating") setMode("seating");
-        state.selectedStudentId = s.id;
-        renderAll();
-        save();
-      });
-
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "mini";
-      del.textContent = "Remove";
-
-      del.addEventListener("click", () => {
-        snapshot();
-        for(const [dk, sid] of state.placements.entries()){
-          if(sid === s.id) state.placements.delete(dk);
+      function announce(message) {
+        if (!message) {
+          els.notice.classList.remove("show");
+          els.notice.textContent = "";
+          return;
         }
-        state.students = state.students.filter(x => x.id !== s.id);
-        if(state.selectedStudentId === s.id) state.selectedStudentId = null;
-        renderAll();
+        els.notice.textContent = message;
+        els.notice.classList.add("show");
+      }
+
+      function setStep(step) {
+        state.step = step;
+        render();
         save();
-      });
+      }
 
-      row.appendChild(chip);
-      row.appendChild(input);
-      row.appendChild(seatBtn);
-      row.appendChild(del);
-      studentListEl.appendChild(row);
-    });
-  }
-
-  function connectedDirectionsForPath(k){
-    const {r,c} = parseKey(k);
-    const dirs = [];
-    const up = keyOf(r-1,c);
-    const down = keyOf(r+1,c);
-    const left = keyOf(r,c-1);
-    const right = keyOf(r,c+1);
-    if(state.paths.has(up)) dirs.push("t");
-    if(state.paths.has(down)) dirs.push("b");
-    if(state.paths.has(left)) dirs.push("l");
-    if(state.paths.has(right)) dirs.push("r");
-    return dirs;
-  }
-
-  function renderGrid(){
-    gridEl.style.gridTemplateColumns = `repeat(${state.grid.cols}, var(--cell))`;
-    gridEl.innerHTML = "";
-
-    for(let r=0; r<state.grid.rows; r++){
-      for(let c=0; c<state.grid.cols; c++){
-        const cell = document.createElement("div");
-        cell.className = "cell";
-        cell.dataset.r = r;
-        cell.dataset.c = c;
-        const k = keyOf(r,c);
-
-        const isDesk = state.desks.has(k);
-        const isPath = state.paths.has(k);
-
-        if(isDesk) cell.classList.add("desk");
-        if(isPath) cell.classList.add("path");
-
-        // Add path merge bridges
-        if(isPath){
-          const dirs = connectedDirectionsForPath(k);
-          for(const d of dirs){
-            const bridge = document.createElement("div");
-            bridge.className = `bridge ${d}`;
-            cell.appendChild(bridge);
+      function resizeGrid(rows, cols) {
+        pushHistory();
+        state.rows = Math.max(3, Math.min(16, Number(rows) || 8));
+        state.cols = Math.max(3, Math.min(18, Number(cols) || 10));
+        for (const set of [state.desks, state.paths]) {
+          for (const key of [...set]) {
+            const { r, c } = parseKey(key);
+            if (!inBounds(r, c)) set.delete(key);
           }
         }
-
-        // seat label (desk only)
-        if(isDesk){
-          const label = state.labels.get(k);
-          if(label){
-            const lab = document.createElement("div");
-            lab.className = "seat-label";
-            lab.textContent = label;
-            lab.title = label;
-            cell.appendChild(lab);
-          }
+        for (const [key] of [...state.placements]) {
+          const { r, c } = parseKey(key);
+          if (!inBounds(r, c) || !state.desks.has(key)) state.placements.delete(key);
         }
+        for (const [key] of [...state.labels]) {
+          const { r, c } = parseKey(key);
+          if (!inBounds(r, c) || !state.desks.has(key)) state.labels.delete(key);
+        }
+        render();
+        save();
+      }
 
-        // drag/drop seating
-        cell.addEventListener("dragover", (e) => {
-          if(state.mode !== "seating") return;
-          if(!cell.classList.contains("desk")) return;
-          e.preventDefault();
-        });
-
-        cell.addEventListener("drop", (e) => {
-          if(state.mode !== "seating") return;
-          if(!cell.classList.contains("desk")) return;
-          e.preventDefault();
-          const sid = e.dataTransfer.getData("text/student-id");
-          if(!sid) return;
-          snapshot();
-          moveStudentToDesk(sid, k);
-          state.selectedStudentId = null;
-          renderAll();
-          save();
-        });
-
-        // Hold-to-paint: start on mousedown, continue on enter while down, stop on mouseup
-        cell.addEventListener("mousedown", (e) => {
-          if(e.button !== 0) return; // left only
-          const k = keyOf(r,c);
-
-          if(state.mode === "layout"){
-            snapshot();
-            isPainting = true;
-
-            // Determine add/remove based on first cell state
-            if(state.paintTool === "desk"){
-              paintWillAdd = !state.desks.has(k);
-            } else {
-              paintWillAdd = !state.paths.has(k);
+      function applyPreset(name) {
+        pushHistory();
+        state.desks.clear();
+        state.paths.clear();
+        state.labels.clear();
+        state.placements.clear();
+        const addDesk = (r, c) => { if (inBounds(r, c)) state.desks.add(keyOf(r, c)); };
+        const addPath = (r, c) => { if (inBounds(r, c)) state.paths.add(keyOf(r, c)); };
+        if (name === "rows") {
+          for (let r = 0; r < state.rows; r++) {
+            for (let c = 0; c < state.cols; c++) (c % 3 === 2 ? addPath : addDesk)(r, c);
+          }
+        } else if (name === "pods") {
+          for (let r = 0; r < state.rows; r += 3) {
+            for (let c = 0; c < state.cols; c += 3) {
+              addDesk(r, c); addDesk(r, c + 1); addDesk(r + 1, c); addDesk(r + 1, c + 1);
             }
+          }
+          for (let r = 2; r < state.rows; r += 3) for (let c = 0; c < state.cols; c++) addPath(r, c);
+        } else if (name === "u") {
+          for (let r = 0; r < state.rows; r++) { addDesk(r, 0); addDesk(r, state.cols - 1); }
+          for (let c = 0; c < state.cols; c++) addDesk(state.rows - 1, c);
+          for (let r = 1; r < state.rows - 1; r++) for (let c = 1; c < state.cols - 1; c++) addPath(r, c);
+        } else if (name === "lab") {
+          for (let r = 0; r < state.rows; r += 2) for (let c = 0; c < state.cols; c++) addDesk(r, c);
+          for (let r = 1; r < state.rows; r += 2) for (let c = 0; c < state.cols; c++) addPath(r, c);
+        }
+        autoLabel(false);
+        render();
+        save();
+      }
 
-            applyPaintToCell(k);
-            renderAll(); // render to show immediate changes
-            save();
-          } else {
-            // seating mode click-to-seat
-            if(!state.desks.has(k)) return;
-            if(state.selectedStudentId){
-              snapshot();
-              moveStudentToDesk(state.selectedStudentId, k);
-              state.selectedStudentId = null;
-              renderAll();
+      function autoLabel(withHistory = true) {
+        if (withHistory) pushHistory();
+        const desks = [...state.desks].map(parseKey).sort((a, b) => a.r - b.r || a.c - b.c);
+        state.labels.clear();
+        desks.forEach(({ r, c }, index) => {
+          const rowLetter = String.fromCharCode(65 + Math.min(25, r));
+          state.labels.set(keyOf(r, c), `${rowLetter}${index + 1}`);
+        });
+        render();
+        save();
+      }
+
+      function paintCell(key) {
+        if (state.tool === "desk") {
+          state.desks.add(key);
+          state.paths.delete(key);
+        } else if (state.tool === "path") {
+          state.paths.add(key);
+          state.desks.delete(key);
+          state.placements.delete(key);
+          state.labels.delete(key);
+        } else {
+          state.desks.delete(key);
+          state.paths.delete(key);
+          state.placements.delete(key);
+          state.labels.delete(key);
+        }
+      }
+
+      function placeStudent(studentId, deskKey) {
+        if (!state.desks.has(deskKey)) return;
+        for (const [desk, id] of [...state.placements]) {
+          if (id === studentId) state.placements.delete(desk);
+        }
+        const current = state.placements.get(deskKey);
+        if (current && current !== studentId) {
+          state.placements.delete(deskKey);
+          const oldSeat = getSeatOf(studentId);
+          if (oldSeat) state.placements.set(oldSeat, current);
+        }
+        state.placements.set(deskKey, studentId);
+      }
+
+      function swapStudents(a, b) {
+        if (!a || !b || a === b) return;
+        const seatA = getSeatOf(a);
+        const seatB = getSeatOf(b);
+        pushHistory();
+        if (seatA) state.placements.delete(seatA);
+        if (seatB) state.placements.delete(seatB);
+        if (seatA) state.placements.set(seatA, b);
+        if (seatB) state.placements.set(seatB, a);
+        state.swapFirstId = null;
+        render();
+        save();
+      }
+
+      function shuffle(list) {
+        return list.map((v) => [Math.random(), v]).sort((a, b) => a[0] - b[0]).map((pair) => pair[1]);
+      }
+
+      function smartSeat(fillEmptyOnly) {
+        pushHistory();
+        const lockedIds = new Set(state.students.filter((s) => s.locked).map((s) => s.id));
+        const occupiedByLocked = new Set([...state.placements].filter(([, id]) => lockedIds.has(id)).map(([desk]) => desk));
+        if (!fillEmptyOnly) {
+          for (const [desk, id] of [...state.placements]) if (!lockedIds.has(id)) state.placements.delete(desk);
+        }
+        let desks = [...state.desks].filter((desk) => !state.placements.has(desk) && !occupiedByLocked.has(desk));
+        let pool = state.students.filter((s) => !lockedIds.has(s.id));
+        if (fillEmptyOnly) {
+          const seated = getSeatedIds();
+          pool = pool.filter((s) => !seated.has(s.id));
+        }
+        pool = shuffle(pool).sort((a, b) => {
+          const aNeed = a.zone && a.zone !== "any" ? -1 : 0;
+          const bNeed = b.zone && b.zone !== "any" ? -1 : 0;
+          return aNeed - bNeed;
+        });
+        for (const student of pool) {
+          if (!desks.length) break;
+          const previous = getSeatOf(student.id, state.previousPlacements);
+          const keepApart = String(student.notes || "").toLowerCase().includes("keep apart") || student.behavior === "keep-apart";
+          const together = String(student.notes || "").toLowerCase().includes("together") || student.behavior === "together";
+          const seatedDeskValues = [...state.placements.entries()];
+          const togetherSeats = seatedDeskValues
+            .filter(([, id]) => {
+              const other = getStudent(id);
+              return other && other.id !== student.id && (other.behavior === "together" || String(other.notes || "").toLowerCase().includes("together"));
+            })
+            .map(([desk]) => desk);
+          const ranked = desks.slice().sort((a, b) => {
+            let sa = zoneScore(student, a);
+            let sb = zoneScore(student, b);
+            if (state.avoidPrevious && previous) {
+              if (a === previous) sa += 20;
+              if (b === previous) sb += 20;
+            }
+            if (keepApart) {
+              const badA = seatedDeskValues.some(([desk, id]) => {
+                const other = getStudent(id);
+                return adjacent(a, desk) && (other?.behavior === "keep-apart" || String(other?.notes || "").toLowerCase().includes("keep apart"));
+              });
+              const badB = seatedDeskValues.some(([desk, id]) => {
+                const other = getStudent(id);
+                return adjacent(b, desk) && (other?.behavior === "keep-apart" || String(other?.notes || "").toLowerCase().includes("keep apart"));
+              });
+              if (badA) sa += 10;
+              if (badB) sb += 10;
+            }
+            if (together && togetherSeats.length) {
+              const nearA = togetherSeats.some((desk) => adjacent(a, desk));
+              const nearB = togetherSeats.some((desk) => adjacent(b, desk));
+              if (!nearA) sa += 8;
+              if (!nearB) sb += 8;
+            }
+            return sa - sb;
+          });
+          const chosen = ranked[0];
+          state.placements.set(chosen, student.id);
+          desks = desks.filter((d) => d !== chosen);
+        }
+        state.selectedStudentId = null;
+        render();
+        save();
+      }
+
+      function renderGrid() {
+        els.grid.style.gridTemplateColumns = `repeat(${state.cols}, var(--cell))`;
+        els.grid.innerHTML = "";
+        const startPaint = (key) => {
+          pushHistory();
+          isPainting = true;
+          paintCell(key);
+          render();
+          save();
+        };
+        for (let r = 0; r < state.rows; r++) {
+          for (let c = 0; c < state.cols; c++) {
+            const key = keyOf(r, c);
+            const cell = document.createElement("div");
+            cell.className = "cell";
+            cell.dataset.key = key;
+            if (state.desks.has(key)) cell.classList.add("desk");
+            if (state.paths.has(key)) cell.classList.add("path");
+            if ([...state.previousPlacements.keys()].includes(key)) cell.classList.add("previous-seat");
+            const label = state.labels.get(key);
+            if (label && state.desks.has(key)) {
+              const lab = document.createElement("div");
+              lab.className = "seat-label";
+              lab.textContent = label;
+              cell.appendChild(lab);
+            }
+            const studentId = state.placements.get(key);
+            if (studentId) {
+              const student = getStudent(studentId);
+              if (student) {
+                const token = document.createElement("div");
+                token.className = `token${student.locked ? " locked" : ""}${state.selectedStudentId === student.id || state.swapFirstId === student.id ? " selected" : ""}`;
+                token.draggable = !student.locked;
+                token.textContent = compactName(student.name);
+                token.title = `${student.name}${student.notes ? ` - ${student.notes}` : ""}`;
+                token.addEventListener("click", (event) => {
+                  event.stopPropagation();
+                  if (state.swapMode) {
+                    if (!state.swapFirstId) state.swapFirstId = student.id;
+                    else swapStudents(state.swapFirstId, student.id);
+                  } else {
+                    state.selectedStudentId = student.id;
+                  }
+                  render();
+                  save();
+                });
+                token.addEventListener("dragstart", (event) => {
+                  if (student.locked) {
+                    event.preventDefault();
+                    return;
+                  }
+                  event.dataTransfer.setData("text/student-id", student.id);
+                });
+                cell.appendChild(token);
+              }
+            }
+            cell.addEventListener("mousedown", (event) => {
+              if (event.button !== 0) return;
+              if (state.step === "build") startPaint(key);
+            });
+            cell.addEventListener("mouseenter", () => {
+              if (isPainting && state.step === "build") {
+                paintCell(key);
+                render();
+                save();
+              }
+            });
+            cell.addEventListener("mouseup", () => { isPainting = false; });
+            cell.addEventListener("dblclick", () => {
+              if (!state.desks.has(key)) return;
+              pushHistory();
+              const next = prompt("Desk label (blank clears it):", state.labels.get(key) || "");
+              if (next === null) return;
+              const clean = next.trim();
+              if (clean) state.labels.set(key, clean);
+              else state.labels.delete(key);
+              render();
               save();
-            } else {
-              document.querySelectorAll(".cell.selected-seat").forEach(n => n.classList.remove("selected-seat"));
-              cell.classList.add("selected-seat");
+            });
+            cell.addEventListener("dragover", (event) => {
+              if (state.desks.has(key)) event.preventDefault();
+            });
+            cell.addEventListener("drop", (event) => {
+              const id = event.dataTransfer.getData("text/student-id");
+              if (!id || !state.desks.has(key)) return;
+              pushHistory();
+              placeStudent(id, key);
+              render();
+              save();
+            });
+            cell.addEventListener("click", () => {
+              if (state.step !== "seat" || !state.selectedStudentId || !state.desks.has(key)) return;
+              const student = getStudent(state.selectedStudentId);
+              if (student?.locked) return;
+              pushHistory();
+              placeStudent(state.selectedStudentId, key);
+              state.selectedStudentId = null;
+              render();
+              save();
+            });
+            els.grid.appendChild(cell);
+          }
+        }
+      }
+
+      function renderRoster() {
+        const search = $("searchInput").value.trim().toLowerCase();
+        const filter = $("filterSelect").value;
+        const seated = getSeatedIds();
+        let students = state.students;
+        if (search) students = students.filter((s) => `${s.name} ${s.notes || ""}`.toLowerCase().includes(search));
+        if (filter === "unseated") students = students.filter((s) => !seated.has(s.id));
+        if (filter === "locked") students = students.filter((s) => s.locked);
+        if (filter === "front") students = students.filter((s) => s.zone === "front");
+        if (filter === "notes") students = students.filter((s) => s.notes);
+        els.list.innerHTML = "";
+        students.forEach((student, index) => {
+          const row = document.createElement("div");
+          row.className = `student-row${student.locked ? " locked" : ""}`;
+          row.innerHTML = `
+            <div class="num">${index + 1}</div>
+            <input class="student-name" value="${escapeHtml(student.name)}" />
+            <button class="pick" type="button">${seated.has(student.id) ? "Find" : "Seat"}</button>
+            <button class="lock" type="button">${student.locked ? "Locked" : "Lock"}</button>
+            <div class="student-meta">
+              <select class="zone">
+                <option value="any">Any seat</option>
+                <option value="front">Front</option>
+                <option value="back">Back</option>
+                <option value="window">Window side</option>
+                <option value="door">Door side</option>
+              </select>
+              <select class="behavior">
+                <option value="">No tag</option>
+                <option value="keep-apart">Keep apart</option>
+                <option value="together">Seat together</option>
+                <option value="support">Support needed</option>
+              </select>
+              <input class="notes" placeholder="Private teacher notes" value="${escapeHtml(student.notes || "")}" />
+              <button class="remove danger" type="button">Remove</button>
+            </div>
+          `;
+          row.querySelector(".zone").value = student.zone || "any";
+          row.querySelector(".behavior").value = student.behavior || "";
+          row.querySelector(".student-name").addEventListener("change", (e) => {
+            pushHistory();
+            student.name = e.target.value.trim() || student.name;
+            render();
+            save();
+          });
+          row.querySelector(".zone").addEventListener("change", (e) => {
+            pushHistory();
+            student.zone = e.target.value;
+            save();
+          });
+          row.querySelector(".behavior").addEventListener("change", (e) => {
+            pushHistory();
+            student.behavior = e.target.value;
+            save();
+          });
+          row.querySelector(".notes").addEventListener("change", (e) => {
+            pushHistory();
+            student.notes = e.target.value.trim();
+            render();
+            save();
+          });
+          row.querySelector(".pick").addEventListener("click", () => {
+            state.step = "seat";
+            state.selectedStudentId = student.id;
+            render();
+            save();
+          });
+          row.querySelector(".lock").addEventListener("click", () => {
+            pushHistory();
+            student.locked = !student.locked;
+            render();
+            save();
+          });
+          row.querySelector(".remove").addEventListener("click", () => {
+            pushHistory();
+            state.students = state.students.filter((s) => s.id !== student.id);
+            for (const [desk, id] of [...state.placements]) if (id === student.id) state.placements.delete(desk);
+            render();
+            save();
+          });
+          els.list.appendChild(row);
+        });
+      }
+
+      function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, (char) => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+        }[char]));
+      }
+
+      function renderStats() {
+        const seated = getSeatedIds().size;
+        $("deskCount").textContent = state.desks.size;
+        $("studentCount").textContent = state.students.length;
+        $("seatedCount").textContent = seated;
+        $("openCount").textContent = Math.max(0, state.desks.size - seated);
+        if (state.students.length > state.desks.size) {
+          announce(`${state.students.length - state.desks.size} student(s) will remain unseated unless you add desks.`);
+        } else {
+          announce("");
+        }
+      }
+
+      function renderChrome() {
+        ["Build", "Roster", "Seat"].forEach((name) => {
+          $(`step${name}`).classList.toggle("active", state.step === name.toLowerCase());
+        });
+        document.querySelectorAll("[data-section]").forEach((section) => {
+          section.style.display = section.dataset.section === state.step ? "block" : "none";
+        });
+        $("rowsInput").value = state.rows;
+        $("colsInput").value = state.cols;
+        $("deskToolBtn").classList.toggle("active", state.tool === "desk");
+        $("pathToolBtn").classList.toggle("active", state.tool === "path");
+        $("eraseToolBtn").classList.toggle("active", state.tool === "erase");
+        $("swapModeBtn").textContent = `Swap mode: ${state.swapMode ? "On" : "Off"}`;
+        $("swapModeBtn").classList.toggle("active", state.swapMode);
+        $("avoidPreviousInput").checked = state.avoidPrevious;
+        $("legibilityInput").value = state.legibility;
+        $("versionSelect").value = state.version;
+        $("themeBtn").textContent = `Dark mode: ${state.dark ? "On" : "Off"}`;
+        $("printThemeBtn").textContent = `Print theme: ${state.printTheme ? "On" : "Off"}`;
+        $("chartTitleInput").value = state.chartTitle;
+        $("teacherInput").value = state.teacher;
+        $("dateInput").value = state.date;
+        $("chartTitleView").textContent = state.chartTitle || "Classroom Seating Chart";
+        $("teacherView").textContent = state.teacher || "Teacher";
+        $("dateView").textContent = state.date ? `- ${state.date}` : "";
+        const noteCount = state.students.filter((s) => s.notes).length;
+        $("teacherNotesView").textContent = noteCount ? `${noteCount} student note(s) included in the roster and CSV export.` : "";
+      }
+
+      function render() {
+        updateCss();
+        renderChrome();
+        renderGrid();
+        renderRoster();
+        renderStats();
+      }
+
+      function applyPaste() {
+        const names = normalizeNames($("pasteBox").value);
+        if (!names.length) return;
+        pushHistory();
+        let added = 0;
+        let skipped = 0;
+        if ($("pasteMode").value === "replace") {
+          const oldByName = new Map(state.students.map((s) => [s.name.trim().toLowerCase(), s]));
+          state.students = names.map((name) => {
+            const old = oldByName.get(name.toLowerCase());
+            if (old) return { ...old, name };
+            added++;
+            return { id: uid(), name, zone: "any", behavior: "", notes: "", locked: false };
+          });
+          const valid = new Set(state.students.map((s) => s.id));
+          for (const [desk, id] of [...state.placements]) if (!valid.has(id)) state.placements.delete(desk);
+        } else {
+          const existing = new Set(state.students.map((s) => s.name.trim().toLowerCase()));
+          names.forEach((name) => {
+            if (existing.has(name.toLowerCase())) {
+              skipped++;
+              return;
             }
-          }
-        });
+            existing.add(name.toLowerCase());
+            added++;
+            state.students.push({ id: uid(), name, zone: "any", behavior: "", notes: "", locked: false });
+          });
+        }
+        els.importStatus.textContent = `Imported ${names.length} name(s). Added ${added}. Skipped ${skipped} duplicate(s).`;
+        render();
+        save();
+      }
 
-        cell.addEventListener("mouseenter", () => {
-          if(state.mode !== "layout") return;
-          if(!isPainting) return;
-          const k = keyOf(r,c);
-          applyPaintToCell(k);
-          renderAll();
+      function addStudent(name) {
+        const clean = name.trim();
+        if (!clean) return;
+        if (state.students.some((s) => s.name.toLowerCase() === clean.toLowerCase())) {
+          els.importStatus.textContent = `${clean} is already on the roster.`;
+          return;
+        }
+        pushHistory();
+        state.students.push({ id: uid(), name: clean, zone: "any", behavior: "", notes: "", locked: false });
+        $("addNameInput").value = "";
+        render();
+        save();
+      }
+
+      function exportCSV() {
+        const byId = new Map(state.students.map((s) => [s.id, s]));
+        const lines = ["row,col,label,student,zone,tag,locked,notes,previous_row,previous_col"];
+        const q = (value) => `"${String(value || "").replace(/"/g, '""')}"`;
+        [...state.desks].map(parseKey).sort((a, b) => a.r - b.r || a.c - b.c).forEach(({ r, c }) => {
+          const desk = keyOf(r, c);
+          const student = byId.get(state.placements.get(desk));
+          const previousSeat = student ? getSeatOf(student.id, state.previousPlacements) : "";
+          const prev = previousSeat ? parseKey(previousSeat) : null;
+          lines.push([
+            r + 1, c + 1, q(state.labels.get(desk)), q(student?.name),
+            q(student?.zone), q(student?.behavior), student?.locked ? "yes" : "no",
+            q(student?.notes), prev ? prev.r + 1 : "", prev ? prev.c + 1 : ""
+          ].join(","));
+        });
+        const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "seating-assignments.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      }
+
+      async function exportPNG() {
+        const panel = $("chartPanel");
+        if (window.html2canvas) {
+          const canvas = await html2canvas(panel, { scale: 2, backgroundColor: getComputedStyle(document.body).getPropertyValue("--bg") });
+          const a = document.createElement("a");
+          a.href = canvas.toDataURL("image/png");
+          a.download = "seating-chart.png";
+          a.click();
+        } else {
+          alert("PNG export needs html2canvas to load. Use Print for now, or reconnect and try again.");
+        }
+      }
+
+      function wire() {
+        $("stepBuild").addEventListener("click", () => setStep("build"));
+        $("stepRoster").addEventListener("click", () => setStep("roster"));
+        $("stepSeat").addEventListener("click", () => setStep("seat"));
+        $("undoBtn").addEventListener("click", () => {
+          const previous = history.pop();
+          if (!previous) return;
+          restore(previous);
+          render();
           save();
         });
-
-        // Seat label: double-click a desk in layout mode
-        cell.addEventListener("dblclick", (e) => {
-          if(state.mode !== "layout") return;
-          const k = keyOf(r,c);
-          if(!state.desks.has(k)) return;
-
-          snapshot();
-          const current = state.labels.get(k) || "";
-          const next = prompt("Seat label (leave blank to clear):", current);
-          if(next === null) return; // cancelled
-          const trimmed = next.trim();
-          if(trimmed) state.labels.set(k, trimmed);
-          else state.labels.delete(k);
-
-          renderAll();
-          save();
+        $("rowsInput").addEventListener("change", () => resizeGrid($("rowsInput").value, state.cols));
+        $("colsInput").addEventListener("change", () => resizeGrid(state.rows, $("colsInput").value));
+        $("applyPresetBtn").addEventListener("click", () => applyPreset($("presetSelect").value));
+        $("autoLabelBtn").addEventListener("click", () => autoLabel(true));
+        $("clearRoomBtn").addEventListener("click", () => {
+          pushHistory();
+          state.desks.clear(); state.paths.clear(); state.labels.clear(); state.placements.clear();
+          render(); save();
         });
-
-        // populate token if seated
-        const seatedId = state.placements.get(k);
-        if(seatedId){
-          const s = state.students.find(x => x.id === seatedId);
-          if(s){
-            cell.appendChild(makeToken(s));
-          } else {
-            state.placements.delete(k);
+        $("deskToolBtn").addEventListener("click", () => { state.tool = "desk"; render(); save(); });
+        $("pathToolBtn").addEventListener("click", () => { state.tool = "path"; render(); save(); });
+        $("eraseToolBtn").addEventListener("click", () => { state.tool = "erase"; render(); save(); });
+        $("applyPasteBtn").addEventListener("click", applyPaste);
+        $("addStudentBtn").addEventListener("click", () => addStudent($("addNameInput").value));
+        $("addNameInput").addEventListener("keydown", (e) => { if (e.key === "Enter") addStudent($("addNameInput").value); });
+        $("searchInput").addEventListener("input", renderRoster);
+        $("filterSelect").addEventListener("change", renderRoster);
+        $("fillEmptyBtn").addEventListener("click", () => smartSeat(true));
+        $("reshuffleBtn").addEventListener("click", () => smartSeat(false));
+        $("swapModeBtn").addEventListener("click", () => {
+          state.swapMode = !state.swapMode;
+          state.swapFirstId = null;
+          render(); save();
+        });
+        $("avoidPreviousInput").addEventListener("change", (e) => { state.avoidPrevious = e.target.checked; save(); });
+        $("savePreviousBtn").addEventListener("click", () => {
+          pushHistory();
+          state.previousPlacements = new Map(state.placements);
+          render(); save();
+        });
+        $("clearSeatsBtn").addEventListener("click", () => {
+          pushHistory();
+          const lockedIds = new Set(state.students.filter((s) => s.locked).map((s) => s.id));
+          for (const [desk, id] of [...state.placements]) if (!lockedIds.has(id)) state.placements.delete(desk);
+          render(); save();
+        });
+        $("legibilityInput").addEventListener("input", (e) => { state.legibility = Number(e.target.value); render(); save(); });
+        $("versionSelect").addEventListener("change", (e) => { state.version = e.target.value; render(); save(); });
+        $("themeBtn").addEventListener("click", () => { state.dark = !state.dark; render(); save(); });
+        $("printThemeBtn").addEventListener("click", () => { state.printTheme = !state.printTheme; render(); save(); });
+        $("exportPngBtn").addEventListener("click", exportPNG);
+        $("exportCsvBtn").addEventListener("click", exportCSV);
+        $("printBtn").addEventListener("click", () => window.print());
+        $("resetBtn").addEventListener("click", () => {
+          if (!confirm("Reset the room, roster, and seating?")) return;
+          pushHistory();
+          localStorage.removeItem(STORAGE_KEY);
+          location.reload();
+        });
+        ["chartTitleInput", "teacherInput", "dateInput"].forEach((id) => {
+          $(id).addEventListener("input", (e) => {
+            if (id === "chartTitleInput") state.chartTitle = e.target.value;
+            if (id === "teacherInput") state.teacher = e.target.value;
+            if (id === "dateInput") state.date = e.target.value;
+            renderChrome();
+            save();
+          });
+        });
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "Escape") {
+            isPainting = false;
+            state.selectedStudentId = null;
+            state.swapFirstId = null;
+            render();
+            save();
           }
-        }
-
-        // token selection styling
-        if(seatedId && state.selectedStudentId && seatedId === state.selectedStudentId){
-          // handled by renderAll's query selection pass
-        }
-
-        gridEl.appendChild(cell);
-      }
-    }
-  }
-
-  function applyPaintToCell(k){
-    // cannot be both path and desk
-    if(state.paintTool === "desk"){
-      if(paintWillAdd){
-        state.desks.add(k);
-        state.paths.delete(k); // if it was a pathway, desk wins
-      } else {
-        state.desks.delete(k);
-        state.placements.delete(k);
-        state.labels.delete(k);
-      }
-    } else {
-      if(paintWillAdd){
-        state.paths.add(k);
-        // if it was a desk, pathway wins (and clears seat/label)
-        if(state.desks.has(k)){
-          state.desks.delete(k);
-          state.placements.delete(k);
-          state.labels.delete(k);
-        }
-      } else {
-        state.paths.delete(k);
-      }
-    }
-  }
-
-  function renderSelections(){
-    document.querySelectorAll(".token.selected").forEach(n => n.classList.remove("selected"));
-    if(state.selectedStudentId){
-      const tok = document.querySelector(`.token[data-sid="${CSS.escape(state.selectedStudentId)}"]`);
-      if(tok) tok.classList.add("selected");
-    }
-  }
-
-  function renderAll(fromUndo=false){
-    renderModeUI();
-    renderGrid();
-    renderRoster();
-    renderSelections();
-    updateKPIs();
-    if(!fromUndo) save();
-  }
-
-  // Student operations
-  function addStudent(name){
-    const n = (name || "").trim();
-    if(!n) return;
-
-    snapshot();
-
-    const exists = state.students.some(s => s.name.trim().toLowerCase() === n.toLowerCase());
-    if(exists) return;
-
-    state.students.push({ id: uid(), name: n });
-    renderAll();
-    save();
-  }
-
-  function applyPaste(){
-    const names = normalizeNames(pasteBox.value || "");
-    if(!names.length) return;
-
-    snapshot();
-
-    if(pasteMode.value === "replace"){
-      // preserve seating by name match if possible
-      const oldByName = new Map();
-      for(const s of state.students){
-        oldByName.set(s.name.trim().toLowerCase(), s.id);
+        });
+        document.addEventListener("mouseup", () => { isPainting = false; });
+        document.addEventListener("mouseleave", () => { isPainting = false; });
       }
 
-      const newStudents = [];
-      for(const nm of names){
-        const key = nm.trim().toLowerCase();
-        const reusedId = oldByName.get(key);
-        newStudents.push({ id: reusedId || uid(), name: nm.trim() });
-      }
-
-      state.students = newStudents;
-
-      const validIds = new Set(state.students.map(s => s.id));
-      for(const [dk, sid] of state.placements.entries()){
-        if(!validIds.has(sid)) state.placements.delete(dk);
-      }
-    } else {
-      const existing = new Set(state.students.map(s => s.name.trim().toLowerCase()));
-      for(const nm of names){
-        const key = nm.trim().toLowerCase();
-        if(existing.has(key)) continue;
-        state.students.push({ id: uid(), name: nm.trim() });
-        existing.add(key);
-      }
-    }
-
-    renderAll();
-    save();
-  }
-
-  // Seating ops
-  function moveStudentToDesk(studentId, deskKey){
-    if(!state.desks.has(deskKey)) return;
-
-    // remove from any current desk
-    for(const [dk, sid] of state.placements.entries()){
-      if(sid === studentId) state.placements.delete(dk);
-    }
-
-    // swap behavior: if occupied, unseat occupant into first empty desk if possible
-    const occupant = state.placements.get(deskKey);
-    if(occupant && occupant !== studentId){
-      state.placements.delete(deskKey);
-      state.placements.set(deskKey, studentId);
-
-      const emptyDesk = [...state.desks].find(k => !state.placements.has(k));
-      if(emptyDesk) state.placements.set(emptyDesk, occupant);
-    } else {
-      state.placements.set(deskKey, studentId);
-    }
-  }
-
-  function clearSeats(){
-    snapshot();
-    state.placements.clear();
-    state.selectedStudentId = null;
-    renderAll();
-    save();
-  }
-
-  function clearDesks(){
-    snapshot();
-    state.desks.clear();
-    state.paths.clear();
-    state.labels.clear();
-    state.placements.clear();
-    state.selectedStudentId = null;
-    renderAll();
-    save();
-  }
-
-  function randomize(fillEmptyOnly){
-    snapshot();
-
-    const deskKeys = [...state.desks];
-    if(deskKeys.length === 0) return;
-
-    const targets = fillEmptyOnly ? deskKeys.filter(k => !state.placements.has(k)) : deskKeys;
-
-    const seated = getSeatedSet();
-    const pool = fillEmptyOnly
-      ? state.students.filter(s => !seated.has(s.id))
-      : [...state.students];
-
-    if(!fillEmptyOnly) state.placements.clear();
-
-    pool.sort(() => Math.random() - 0.5);
-
-    for(let i=0; i<targets.length; i++){
-      const sid = pool[i]?.id;
-      if(!sid) break;
-      state.placements.set(targets[i], sid);
-    }
-
-    state.selectedStudentId = null;
-    renderAll();
-    save();
-  }
-
-  // Export
-  async function exportPNG(){
-    const node = document.getElementById("stageCard");
-    await new Promise(r => setTimeout(r, 50));
-    const canvas = await html2canvas(node, { backgroundColor: null, scale: 2 });
-    const a = document.createElement("a");
-    a.href = canvas.toDataURL("image/png");
-    a.download = "seating-chart.png";
-    a.click();
-  }
-
-  function exportCSV(){
-    // CSV includes: row,col,label,student
-    const lines = ["row,col,label,student"];
-    const byId = new Map(state.students.map(s => [s.id, s.name]));
-
-    const keys = [...state.desks]
-      .map(parseKey)
-      .sort((a,b) => (a.r-b.r) || (a.c-b.c))
-      .map(({r,c}) => keyOf(r,c));
-
-    for(const k of keys){
-      const {r,c} = parseKey(k);
-      const label = state.labels.get(k) || "";
-      const sid = state.placements.get(k) || "";
-      const name = sid ? (byId.get(sid) || "") : "";
-      const q = (x) => `"${String(x).replace(/"/g,'""')}"`;
-      lines.push(`${r+1},${c+1},${q(label)},${q(name)}`);
-    }
-
-    const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8;"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "seating-assignments.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
-
-  function resetAll(){
-    snapshot();
-    state.mode = "layout";
-    state.desks.clear();
-    state.paths.clear();
-    state.labels.clear();
-    state.students = [];
-    state.placements.clear();
-    state.selectedStudentId = null;
-    state.showUnseatedOnly = false;
-    state.paintTool = "desk";
-    pasteBox.value = "";
-    addName.value = "";
-    renderAll();
-    save();
-  }
-
-  // Mode
-  function setMode(mode){
-    if(state.mode === mode) return;
-    snapshot();
-    state.mode = mode;
-    state.selectedStudentId = null;
-    renderAll();
-    save();
-  }
-
-  function setPaintTool(tool){
-    snapshot();
-    state.paintTool = tool;
-    renderAll();
-    save();
-  }
-
-  // Events
-  btnLayout.addEventListener("click", () => setMode("layout"));
-  btnSeating.addEventListener("click", () => setMode("seating"));
-  btnUndo.addEventListener("click", restoreSnapshot);
-
-  toolDesk.addEventListener("click", () => setPaintTool("desk"));
-  toolPath.addEventListener("click", () => setPaintTool("path"));
-
-  btnHighContrast.addEventListener("click", () => {
-    snapshot();
-    document.body.classList.toggle("contrast");
-    btnHighContrast.textContent = document.body.classList.contains("contrast")
-      ? "High contrast: ON"
-      : "High contrast: OFF";
-    save();
-  });
-
-  legibility.addEventListener("input", (e) => setLegibility(e.target.value));
-
-  btnApplyPaste.addEventListener("click", applyPaste);
-
-  btnShowUnseated.addEventListener("click", () => {
-    snapshot();
-    state.showUnseatedOnly = !state.showUnseatedOnly;
-    btnShowUnseated.textContent = state.showUnseatedOnly ? "Show all" : "Show unseated only";
-    renderAll();
-    save();
-  });
-
-  btnAdd.addEventListener("click", () => {
-    addStudent(addName.value);
-    addName.value = "";
-    addName.focus();
-  });
-
-  addName.addEventListener("keydown", (e) => {
-    if(e.key === "Enter"){
-      e.preventDefault();
-      btnAdd.click();
-    }
-  });
-
-  btnRandomFill.addEventListener("click", () => randomize(true));
-  btnRandomAll.addEventListener("click", () => randomize(false));
-  btnClearSeats.addEventListener("click", clearSeats);
-  btnClearDesks.addEventListener("click", clearDesks);
-  btnExportPNG.addEventListener("click", exportPNG);
-  btnExportCSV.addEventListener("click", exportCSV);
-  btnResetAll.addEventListener("click", resetAll);
-
-  // Hold-to-paint stop conditions:
-  document.addEventListener("mouseup", () => { isPainting = false; });
-  document.addEventListener("keydown", (e) => {
-    if(e.key === "Escape"){
-      isPainting = false;
-      state.selectedStudentId = null;
-      renderAll();
-      save();
-    }
-  });
-  // if mouse leaves window while down, stop painting
-  document.addEventListener("mouseleave", () => { isPainting = false; });
-
-  // prevent dragging grid in layout mode
-  gridEl.addEventListener("dragstart", (e) => {
-    if(state.mode === "layout") e.preventDefault();
-  });
-
-  // Init
-  load();
-  btnShowUnseated.textContent = state.showUnseatedOnly ? "Show all" : "Show unseated only";
-  btnHighContrast.textContent = document.body.classList.contains("contrast")
-    ? "High contrast: ON"
-    : "High contrast: OFF";
-  setLegibility(Number(legibility.value));
-  renderAll(true);
-})();
-</script>
+      load();
+      wire();
+      if (!state.desks.size && !state.students.length) applyPreset("rows");
+      render();
+    })();
+  </script>
 </body>
 </html>
