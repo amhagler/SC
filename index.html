@@ -145,6 +145,9 @@
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .grid-row.three { grid-template-columns: 1fr 1fr 1fr; }
+    .library-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 7px; align-items: end; }
+    .library-row + .library-row { margin-top: 8px; }
+    .library-count { color: var(--muted); font-size: 11px; font-weight: 800; }
 
     button, input, select, textarea {
       font: inherit;
@@ -308,6 +311,31 @@
 
     .student-meta input, .student-meta select { font-size: 12px; min-height: 32px; padding: 7px 8px; }
 
+    .top-tabs { max-width: 1480px; margin: 0 auto 12px; display: flex; gap: 8px; }
+    .top-tabs .backup-actions { margin-left: auto; display: flex; gap: 8px; }
+    .top-tab { font-size: 14px; padding: 10px 16px; }
+    .top-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+    .group-app { max-width: 1480px; margin: 0 auto; display: none; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start; }
+    .group-app.active { display: grid; }
+    .group-controls details { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+    .group-controls summary { cursor: pointer; color: var(--muted); font-size: 12px; font-weight: 900; }
+    .pair-list { display: grid; gap: 6px; margin-top: 9px; }
+    .pair-rule { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-soft); font-size: 12px; }
+    .group-stage { min-height: 560px; }
+    .group-stage .content { padding: 22px; }
+    .group-heading { text-align: center; margin-bottom: 18px; }
+    .group-heading h2 { font-size: clamp(24px, 3vw, 42px); }
+    .group-heading .sub { font-size: 15px; }
+    .group-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
+    .group-card { border: 2px solid var(--desk-border); border-radius: 12px; background: var(--panel-soft); overflow: hidden; }
+    .group-card h3 { background: var(--accent); color: white; padding: 10px 14px; font-size: 18px; }
+    .group-card ul { list-style: none; padding: 12px 16px 14px; margin: 0; display: grid; gap: 8px; }
+    .group-card li { font-size: clamp(18px, 2vw, 28px); font-weight: 850; line-height: 1.15; }
+    .group-empty { color: var(--muted); text-align: center; padding: 80px 20px; font-size: 18px; }
+    body.presentation .top-tabs, body.presentation .group-controls, body.presentation #groupStageHeader { display: none; }
+    body.presentation .group-app { display: block; max-width: none; }
+    body.presentation .group-stage { border: 0; box-shadow: none; }
+
     .stage-tools {
       display: flex;
       flex-wrap: wrap;
@@ -466,6 +494,7 @@
       body { padding: 10px; }
       .app { grid-template-columns: 1fr; }
       .chart-meta { grid-template-columns: 1fr; }
+      .group-app { grid-template-columns: 1fr; }
     }
 
     @media print {
@@ -480,7 +509,16 @@
   </style>
 </head>
 <body>
-  <main class="app">
+  <nav class="top-tabs" aria-label="Tools">
+    <button class="top-tab active" id="seatingTabBtn" type="button">Seating chart</button>
+    <button class="top-tab" id="groupsTabBtn" type="button">Group randomizer</button>
+    <div class="backup-actions">
+      <button id="saveJsonBtn" type="button">Save JSON backup</button>
+      <button id="loadJsonBtn" type="button">Load JSON backup</button>
+      <input id="jsonFileInput" type="file" accept="application/json,.json" hidden />
+    </div>
+  </nav>
+  <main class="app" id="seatingApp">
     <aside class="panel controls">
       <div class="header">
         <div>
@@ -503,6 +541,25 @@
           <div class="kpi"><div class="label">Open</div><div class="value" id="openCount">0</div></div>
         </div>
         <div class="notice" id="notice"></div>
+
+        <section class="section">
+          <div class="section-title">Saved Classes <span class="library-count" id="libraryStatus">0 rooms · 0 rosters</span></div>
+          <div class="library-row">
+            <label>Classroom layout
+              <select id="roomLibrarySelect"><option value="">Choose a saved room…</option></select>
+            </label>
+            <button id="loadRoomBtn" type="button">Load</button>
+            <button id="saveRoomBtn" class="primary" type="button">Save as…</button>
+          </div>
+          <div class="library-row">
+            <label>Class roster
+              <select id="rosterLibrarySelect"><option value="">Choose a saved roster…</option></select>
+            </label>
+            <button id="loadRosterBtn" type="button">Load</button>
+            <button id="saveRosterBtn" class="primary" type="button">Save as…</button>
+          </div>
+          <p class="hint">Save up to 4 room layouts and 7 rosters in this browser. Loading either keeps the other half of your current work.</p>
+        </section>
 
         <section class="section" data-section="build">
           <div class="section-title">Room Layout</div>
@@ -641,9 +698,51 @@
     </section>
   </main>
 
+  <main class="group-app" id="groupApp">
+    <aside class="panel group-controls">
+      <div class="header"><div><h1>Group Randomizer</h1><p class="sub">Choose a saved class and a target group size.</p></div></div>
+      <div class="content">
+        <label>Saved roster
+          <select id="groupRosterSelect"><option value="">Choose a saved roster…</option></select>
+        </label>
+        <label style="margin-top:10px">Students per group
+          <input id="groupSizeInput" type="number" min="2" max="12" value="4" />
+        </label>
+        <div class="row" style="margin-top:12px">
+          <button class="primary" id="generateGroupsBtn" type="button">Generate groups</button>
+          <button id="presentGroupsBtn" type="button">Present full screen</button>
+        </div>
+        <p class="hint" id="groupStatus">Select a saved roster to begin.</p>
+
+        <details id="pairRulesDetails">
+          <summary>Private pairing rules</summary>
+          <p class="hint">These rules are saved with the roster and are never shown on the projected group board.</p>
+          <div class="grid-row" style="margin-top:9px">
+            <label>Student 1<select id="pairStudentA"></select></label>
+            <label>Student 2<select id="pairStudentB"></select></label>
+          </div>
+          <button id="addPairRuleBtn" type="button" style="margin-top:8px">Don’t group together</button>
+          <div class="pair-list" id="pairRuleList"></div>
+        </details>
+      </div>
+    </aside>
+
+    <section class="panel group-stage">
+      <div class="header" id="groupStageHeader">
+        <div><h2>Projected groups</h2><p class="sub">Private rules remain hidden.</p></div>
+      </div>
+      <div class="content">
+        <div class="group-heading"><h2 id="groupTitle">Groups</h2><p class="sub" id="groupSubtitle"></p></div>
+        <div class="group-board" id="groupBoard"><div class="group-empty">Your generated groups will appear here.</div></div>
+      </div>
+    </section>
+  </main>
+
   <script>
     (() => {
       const STORAGE_KEY = "seating_chart_generator_v5";
+      const LIBRARY_KEY = "seating_chart_library_v1";
+      const library = { rooms: [], rosters: [] };
       const state = {
         step: "build",
         tool: "desk",
@@ -653,6 +752,7 @@
         paths: new Set(),
         labels: new Map(),
         students: [],
+        pairExclusions: [],
         placements: new Map(),
         previousPlacements: new Map(),
         selectedStudentId: null,
@@ -708,6 +808,7 @@
         state.paths = new Set(snapshot.paths);
         state.labels = new Map(snapshot.labels);
         state.students = snapshot.students.map((s) => ({ ...s }));
+        state.pairExclusions = (snapshot.pairExclusions || []).map((pair) => [...pair]);
         state.placements = new Map(snapshot.placements);
         state.previousPlacements = new Map(snapshot.previousPlacements);
       }
@@ -727,6 +828,99 @@
         localStorage.setItem(STORAGE_KEY, serialize());
       }
 
+      function saveLibrary() {
+        localStorage.setItem(LIBRARY_KEY, JSON.stringify(library));
+      }
+
+      function loadLibrary() {
+        try {
+          const saved = JSON.parse(localStorage.getItem(LIBRARY_KEY) || "{}");
+          library.rooms = Array.isArray(saved.rooms) ? saved.rooms.slice(0, 4) : [];
+          library.rosters = Array.isArray(saved.rosters) ? saved.rosters.slice(0, 7) : [];
+        } catch {
+          localStorage.removeItem(LIBRARY_KEY);
+        }
+      }
+
+      function renderLibrary() {
+        const fill = (id, items, placeholder) => {
+          const select = $(id);
+          const selected = select.value;
+          select.innerHTML = `<option value="">${placeholder}</option>`;
+          items.forEach((item) => {
+            const option = document.createElement("option");
+            option.value = item.name;
+            option.textContent = item.name;
+            select.appendChild(option);
+          });
+          if (items.some((item) => item.name === selected)) select.value = selected;
+        };
+        fill("roomLibrarySelect", library.rooms, "Choose a saved room…");
+        fill("rosterLibrarySelect", library.rosters, "Choose a saved roster…");
+        fill("groupRosterSelect", library.rosters, "Choose a saved roster…");
+        $("libraryStatus").textContent = `${library.rooms.length}/4 rooms · ${library.rosters.length}/7 rosters`;
+      }
+
+      function namedSave(kind) {
+        const isRoom = kind === "room";
+        const items = isRoom ? library.rooms : library.rosters;
+        const limit = isRoom ? 4 : 7;
+        const suggested = isRoom ? "Room 303" : (state.teacher || "C Block");
+        const name = prompt(`Name this ${isRoom ? "classroom layout" : "class roster"}:`, suggested)?.trim();
+        if (!name) return;
+        const existing = items.findIndex((item) => item.name.toLowerCase() === name.toLowerCase());
+        if (existing < 0 && items.length >= limit) {
+          alert(`You can save up to ${limit} ${isRoom ? "classroom layouts" : "class rosters"}. Choose an existing name to replace it.`);
+          return;
+        }
+        const data = isRoom ? {
+          rows: state.rows, cols: state.cols, desks: [...state.desks],
+          paths: [...state.paths], labels: [...state.labels]
+        } : {
+          students: state.students.map((student) => ({ ...student })),
+          pairExclusions: (state.pairExclusions || []).map((pair) => [...pair])
+        };
+        const entry = { name, updatedAt: new Date().toISOString(), data };
+        if (existing >= 0) {
+          if (!confirm(`Replace the saved ${isRoom ? "room" : "roster"} “${items[existing].name}”?`)) return;
+          items[existing] = entry;
+        } else {
+          items.push(entry);
+        }
+        items.sort((a, b) => a.name.localeCompare(b.name));
+        saveLibrary();
+        renderLibrary();
+        $(isRoom ? "roomLibrarySelect" : "rosterLibrarySelect").value = name;
+        announce(`${isRoom ? "Room layout" : "Roster"} “${name}” saved in this browser.`);
+      }
+
+      function loadNamed(kind) {
+        const isRoom = kind === "room";
+        const select = $(isRoom ? "roomLibrarySelect" : "rosterLibrarySelect");
+        const entry = (isRoom ? library.rooms : library.rosters).find((item) => item.name === select.value);
+        if (!entry) return;
+        pushHistory();
+        if (isRoom) {
+          state.rows = entry.data.rows;
+          state.cols = entry.data.cols;
+          state.desks = new Set(entry.data.desks || []);
+          state.paths = new Set(entry.data.paths || []);
+          state.labels = new Map(entry.data.labels || []);
+        } else {
+          state.students = (entry.data.students || []).map((student) => ({ ...student }));
+          state.pairExclusions = (entry.data.pairExclusions || []).map((pair) => [...pair]);
+          state.teacher = entry.name;
+        }
+        state.placements.clear();
+        state.previousPlacements.clear();
+        state.selectedStudentId = null;
+        state.swapFirstId = null;
+        state.step = isRoom ? "build" : "roster";
+        render();
+        save();
+        announce(`${isRoom ? "Room layout" : "Roster"} “${entry.name}” loaded. Seating was cleared.`);
+      }
+
       function load() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return;
@@ -739,6 +933,7 @@
           state.placements = new Map(p.placements || []);
           state.previousPlacements = new Map(p.previousPlacements || []);
           state.students = Array.isArray(p.students) ? p.students : [];
+          state.pairExclusions = Array.isArray(p.pairExclusions) ? p.pairExclusions : [];
         } catch {
           localStorage.removeItem(STORAGE_KEY);
         }
@@ -1233,6 +1428,147 @@
         }
       }
 
+      function selectedGroupRoster() {
+        return library.rosters.find((item) => item.name === $("groupRosterSelect").value);
+      }
+
+      function renderPairRules() {
+        const entry = selectedGroupRoster();
+        const students = entry?.data?.students || [];
+        const pairs = entry?.data?.pairExclusions || [];
+        const byId = new Map(students.map((student) => [student.id, student]));
+        ["pairStudentA", "pairStudentB"].forEach((id) => {
+          const select = $(id);
+          const old = select.value;
+          select.innerHTML = "";
+          students.forEach((student) => {
+            const option = document.createElement("option");
+            option.value = student.id;
+            option.textContent = student.name;
+            select.appendChild(option);
+          });
+          if (byId.has(old)) select.value = old;
+        });
+        $("pairRuleList").innerHTML = "";
+        pairs.forEach((pair, index) => {
+          if (!byId.has(pair[0]) || !byId.has(pair[1])) return;
+          const row = document.createElement("div");
+          row.className = "pair-rule";
+          const label = document.createElement("span");
+          label.textContent = `${byId.get(pair[0]).name} / ${byId.get(pair[1]).name}`;
+          const remove = document.createElement("button");
+          remove.type = "button";
+          remove.className = "danger";
+          remove.textContent = "Remove";
+          remove.addEventListener("click", () => {
+            entry.data.pairExclusions.splice(index, 1);
+            saveLibrary();
+            renderPairRules();
+          });
+          row.append(label, remove);
+          $("pairRuleList").appendChild(row);
+        });
+        $("groupStatus").textContent = entry ? `${students.length} students · ${pairs.length} private pairing rule(s)` : "Select a saved roster to begin.";
+      }
+
+      function generateGroups() {
+        const entry = selectedGroupRoster();
+        if (!entry) return alert("Choose a saved roster first.");
+        const students = (entry.data.students || []).map((student) => ({ ...student }));
+        if (students.length < 2) return alert("This roster needs at least two students.");
+        const target = Math.max(2, Math.min(12, Number($("groupSizeInput").value) || 4));
+        $("groupSizeInput").value = target;
+        const groupCount = Math.ceil(students.length / target);
+        const base = Math.floor(students.length / groupCount);
+        const extra = students.length % groupCount;
+        const capacities = Array.from({ length: groupCount }, (_, index) => base + (index < extra ? 1 : 0));
+        const blocked = new Set((entry.data.pairExclusions || []).map((pair) => [...pair].sort().join("|")));
+        const conflictsIn = (student, group) => group.reduce((count, member) => count + (blocked.has([student.id, member.id].sort().join("|")) ? 1 : 0), 0);
+        let best = null;
+        for (let attempt = 0; attempt < 500; attempt++) {
+          const order = [...students].sort(() => Math.random() - .5);
+          const groups = capacities.map(() => []);
+          order.forEach((student) => {
+            const choices = groups
+              .map((group, index) => ({ index, conflicts: conflictsIn(student, group), fill: group.length / capacities[index], tie: Math.random() }))
+              .filter((choice) => groups[choice.index].length < capacities[choice.index])
+              .sort((a, b) => a.conflicts - b.conflicts || a.fill - b.fill || a.tie - b.tie);
+            groups[choices[0].index].push(student);
+          });
+          const conflicts = groups.reduce((total, group) => total + group.reduce((sum, student, index) => sum + conflictsIn(student, group.slice(index + 1)), 0), 0);
+          if (!best || conflicts < best.conflicts) best = { groups, conflicts };
+          if (conflicts === 0) break;
+        }
+        $("groupTitle").textContent = entry.name;
+        $("groupSubtitle").textContent = `${students.length} students · ${best.groups.length} groups`;
+        $("groupBoard").innerHTML = "";
+        best.groups.forEach((group, index) => {
+          const card = document.createElement("section");
+          card.className = "group-card";
+          const heading = document.createElement("h3");
+          heading.textContent = `Group ${index + 1}`;
+          const list = document.createElement("ul");
+          group.forEach((student) => {
+            const item = document.createElement("li");
+            item.textContent = student.name;
+            list.appendChild(item);
+          });
+          card.append(heading, list);
+          $("groupBoard").appendChild(card);
+        });
+        $("groupStatus").textContent = best.conflicts ? `Best arrangement found, but ${best.conflicts} private rule(s) could not all be satisfied. Try a different group size.` : "Groups generated with all private pairing rules satisfied.";
+      }
+
+      async function saveJsonBackup() {
+        const backup = JSON.stringify({
+          format: "seating-tools-backup",
+          version: 1,
+          savedAt: new Date().toISOString(),
+          active: JSON.parse(serialize()),
+          library
+        }, null, 2);
+        const filename = `seating-tools-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        if (window.showSaveFilePicker) {
+          try {
+            const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: "JSON backup", accept: { "application/json": [".json"] } }] });
+            const writable = await handle.createWritable();
+            await writable.write(backup);
+            await writable.close();
+            announce("JSON backup saved.");
+            return;
+          } catch (error) {
+            if (error.name === "AbortError") return;
+          }
+        }
+        const url = URL.createObjectURL(new Blob([backup], { type: "application/json" }));
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(url);
+      }
+
+      async function loadJsonBackup(file) {
+        if (!file) return;
+        try {
+          const backup = JSON.parse(await file.text());
+          if (backup.format !== "seating-tools-backup" || !backup.active || !backup.library) throw new Error("Unsupported backup format");
+          if (!confirm("Replace the active work and all saved rooms and rosters with this backup?")) return;
+          restore(backup.active);
+          library.rooms = Array.isArray(backup.library.rooms) ? backup.library.rooms.slice(0, 4) : [];
+          library.rosters = Array.isArray(backup.library.rosters) ? backup.library.rosters.slice(0, 7) : [];
+          save();
+          saveLibrary();
+          render();
+          renderPairRules();
+          announce("JSON backup restored.");
+        } catch (error) {
+          alert(`Could not load that JSON backup: ${error.message}`);
+        } finally {
+          $("jsonFileInput").value = "";
+        }
+      }
+
       function renderChrome() {
         ["Build", "Roster", "Seat"].forEach((name) => {
           $(`step${name}`).classList.toggle("active", state.step === name.toLowerCase());
@@ -1267,6 +1603,7 @@
       function render() {
         updateCss();
         renderChrome();
+        renderLibrary();
         renderGrid();
         renderRoster();
         renderStats();
@@ -1357,9 +1694,50 @@
       }
 
       function wire() {
+        const showWorkspace = (name) => {
+          const groups = name === "groups";
+          $("seatingApp").style.display = groups ? "none" : "grid";
+          $("groupApp").classList.toggle("active", groups);
+          $("seatingTabBtn").classList.toggle("active", !groups);
+          $("groupsTabBtn").classList.toggle("active", groups);
+          if (groups) {
+            renderLibrary();
+            renderPairRules();
+          }
+        };
+        $("seatingTabBtn").addEventListener("click", () => showWorkspace("seating"));
+        $("groupsTabBtn").addEventListener("click", () => showWorkspace("groups"));
+        $("groupRosterSelect").addEventListener("change", renderPairRules);
+        $("generateGroupsBtn").addEventListener("click", generateGroups);
+        $("addPairRuleBtn").addEventListener("click", () => {
+          const entry = selectedGroupRoster();
+          if (!entry) return alert("Choose a saved roster first.");
+          const a = $("pairStudentA").value;
+          const b = $("pairStudentB").value;
+          if (!a || !b || a === b) return alert("Choose two different students.");
+          entry.data.pairExclusions ||= [];
+          if (entry.data.pairExclusions.some((pair) => pair.includes(a) && pair.includes(b))) return alert("That pairing rule already exists.");
+          entry.data.pairExclusions.push([a, b]);
+          saveLibrary();
+          renderPairRules();
+        });
+        $("presentGroupsBtn").addEventListener("click", async () => {
+          document.body.classList.add("presentation");
+          try { await document.documentElement.requestFullscreen?.(); } catch {}
+        });
+        document.addEventListener("fullscreenchange", () => {
+          if (!document.fullscreenElement) document.body.classList.remove("presentation");
+        });
+        $("saveJsonBtn").addEventListener("click", saveJsonBackup);
+        $("loadJsonBtn").addEventListener("click", () => $("jsonFileInput").click());
+        $("jsonFileInput").addEventListener("change", (event) => loadJsonBackup(event.target.files[0]));
         $("stepBuild").addEventListener("click", () => setStep("build"));
         $("stepRoster").addEventListener("click", () => setStep("roster"));
         $("stepSeat").addEventListener("click", () => setStep("seat"));
+        $("saveRoomBtn").addEventListener("click", () => namedSave("room"));
+        $("loadRoomBtn").addEventListener("click", () => loadNamed("room"));
+        $("saveRosterBtn").addEventListener("click", () => namedSave("roster"));
+        $("loadRosterBtn").addEventListener("click", () => loadNamed("roster"));
         $("undoBtn").addEventListener("click", () => {
           const previous = history.pop();
           if (!previous) return;
@@ -1413,7 +1791,7 @@
         $("exportCsvBtn").addEventListener("click", exportCSV);
         $("printBtn").addEventListener("click", () => window.print());
         $("resetBtn").addEventListener("click", () => {
-          if (!confirm("Reset the room, roster, and seating?")) return;
+          if (!confirm("Reset the active room, roster, and seating? Your saved rooms and rosters will be kept.")) return;
           pushHistory();
           localStorage.removeItem(STORAGE_KEY);
           location.reload();
@@ -1440,6 +1818,7 @@
         document.addEventListener("mouseleave", () => { isPainting = false; });
       }
 
+      loadLibrary();
       load();
       wire();
       render();
