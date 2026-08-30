@@ -513,7 +513,8 @@
     <button class="top-tab active" id="seatingTabBtn" type="button">Seating chart</button>
     <button class="top-tab" id="groupsTabBtn" type="button">Group randomizer</button>
     <div class="backup-actions">
-      <button id="saveJsonBtn" type="button">Save JSON backup</button>
+      <button id="saveJsonBtn" type="button">Choose backup file</button>
+      <button id="syncJsonBtn" class="primary" type="button" disabled>Sync JSON</button>
       <button id="loadJsonBtn" type="button">Load JSON backup</button>
       <input id="jsonFileInput" type="file" accept="application/json,.json" hidden />
     </div>
@@ -743,6 +744,7 @@
       const STORAGE_KEY = "seating_chart_generator_v5";
       const LIBRARY_KEY = "seating_chart_library_v1";
       const library = { rooms: [], rosters: [] };
+      let backupFileHandle = null;
       const state = {
         step: "build",
         tool: "desk",
@@ -1519,33 +1521,105 @@
         $("groupStatus").textContent = best.conflicts ? `Best arrangement found, but ${best.conflicts} private rule(s) could not all be satisfied. Try a different group size.` : "Groups generated with all private pairing rules satisfied.";
       }
 
-      async function saveJsonBackup() {
-        const backup = JSON.stringify({
+      function createJsonBackup() {
+        return JSON.stringify({
           format: "seating-tools-backup",
           version: 1,
           savedAt: new Date().toISOString(),
           active: JSON.parse(serialize()),
           library
         }, null, 2);
+      }
+
+      function openBackupHandleDb() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open("seating_tools_files", 1);
+          request.onupgradeneeded = () => request.result.createObjectStore("handles");
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
+
+      async function storeBackupHandle(handle) {
+        const db = await openBackupHandleDb();
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction("handles", "readwrite");
+          transaction.objectStore("handles").put(handle, "json-backup");
+          transaction.oncomplete = resolve;
+          transaction.onerror = () => reject(transaction.error);
+        });
+        db.close();
+      }
+
+      async function readBackupHandle() {
+        try {
+          const db = await openBackupHandleDb();
+          const handle = await new Promise((resolve, reject) => {
+            const request = db.transaction("handles", "readonly").objectStore("handles").get("json-backup");
+            request.onsuccess = () => resolve(request.result || null);
+            request.onerror = () => reject(request.error);
+          });
+          db.close();
+          return handle;
+        } catch {
+          return null;
+        }
+      }
+
+      function updateBackupButtons() {
+        $("syncJsonBtn").disabled = !backupFileHandle;
+        $("syncJsonBtn").title = backupFileHandle ? `Overwrite ${backupFileHandle.name}` : "Choose a backup file first";
+        $("saveJsonBtn").textContent = backupFileHandle ? "Change backup file" : "Choose backup file";
+      }
+
+      async function initializeBackupHandle() {
+        if (!window.showSaveFilePicker || !window.indexedDB) return;
+        backupFileHandle = await readBackupHandle();
+        updateBackupButtons();
+      }
+
+      async function writeToBackupHandle(handle) {
+        let permission = await handle.queryPermission?.({ mode: "readwrite" });
+        if (permission !== "granted") permission = await handle.requestPermission?.({ mode: "readwrite" });
+        if (permission !== "granted") throw new Error("Permission to update the backup file was not granted.");
+        const writable = await handle.createWritable();
+        await writable.write(createJsonBackup());
+        await writable.close();
+      }
+
+      async function saveJsonBackup() {
         const filename = `seating-tools-backup-${new Date().toISOString().slice(0, 10)}.json`;
         if (window.showSaveFilePicker) {
           try {
-            const handle = await window.showSaveFilePicker({ suggestedName: filename, types: [{ description: "JSON backup", accept: { "application/json": [".json"] } }] });
-            const writable = await handle.createWritable();
-            await writable.write(backup);
-            await writable.close();
-            announce("JSON backup saved.");
+            backupFileHandle = await window.showSaveFilePicker({ suggestedName: backupFileHandle?.name || filename, types: [{ description: "JSON backup", accept: { "application/json": [".json"] } }] });
+            await storeBackupHandle(backupFileHandle);
+            await writeToBackupHandle(backupFileHandle);
+            updateBackupButtons();
+            announce(`Backup file set to “${backupFileHandle.name}” and synced.`);
             return;
           } catch (error) {
             if (error.name === "AbortError") return;
+            alert(`Could not set the backup file: ${error.message}`);
+            return;
           }
         }
-        const url = URL.createObjectURL(new Blob([backup], { type: "application/json" }));
+        const url = URL.createObjectURL(new Blob([createJsonBackup()], { type: "application/json" }));
         const link = document.createElement("a");
         link.href = url;
         link.download = filename;
         link.click();
         URL.revokeObjectURL(url);
+        alert("This browser cannot remember a file location. A new JSON download was created instead.");
+      }
+
+      async function syncJsonBackup() {
+        if (!backupFileHandle) return saveJsonBackup();
+        try {
+          await writeToBackupHandle(backupFileHandle);
+          announce(`Synced to “${backupFileHandle.name}”.`);
+        } catch (error) {
+          alert(`Could not sync the backup: ${error.message}`);
+        }
       }
 
       async function loadJsonBackup(file) {
@@ -1729,6 +1803,7 @@
           if (!document.fullscreenElement) document.body.classList.remove("presentation");
         });
         $("saveJsonBtn").addEventListener("click", saveJsonBackup);
+        $("syncJsonBtn").addEventListener("click", syncJsonBackup);
         $("loadJsonBtn").addEventListener("click", () => $("jsonFileInput").click());
         $("jsonFileInput").addEventListener("change", (event) => loadJsonBackup(event.target.files[0]));
         $("stepBuild").addEventListener("click", () => setStep("build"));
@@ -1822,6 +1897,7 @@
       load();
       wire();
       render();
+      initializeBackupHandle();
     })();
   </script>
 </body>
