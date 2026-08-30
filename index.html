@@ -366,8 +366,6 @@
     .random-field { display:flex; flex-wrap:wrap; justify-content:center; align-content:flex-start; gap:10px; max-width:1100px; margin:auto; position:relative; z-index:4; }
     .random-name { padding:10px 15px; border-radius:999px; border:1px solid var(--line); background:linear-gradient(135deg,color-mix(in srgb,var(--panel-soft) 86%,var(--accent) 10%),var(--panel-soft)); color:var(--ink); font-size:clamp(14px,1.55vw,22px); font-weight:900; box-shadow:0 0 14px color-mix(in srgb,var(--accent) 11%,transparent); transition:opacity .25s,filter .25s,transform .25s; }
     .random-name.dimmed { opacity:.22; filter:grayscale(.7); }
-    .random-name.electric-target { opacity:1; transform:scale(1.22); border-color:var(--accent); z-index:12; animation:electricLock .18s steps(2,end) infinite; }
-    @keyframes electricLock { 0%{box-shadow:0 0 8px var(--accent),-8px 0 16px color-mix(in srgb,var(--accent-strong) 70%,transparent)} 100%{box-shadow:0 0 28px var(--accent),8px -5px 18px color-mix(in srgb,var(--accent) 75%,transparent),-4px 7px 12px white} }
     .random-winner { position:absolute; inset:135px 12% auto; min-height:150px; display:grid; place-items:center; text-align:center; pointer-events:none; z-index:30; font-size:clamp(38px,7vw,96px); font-weight:950; color:var(--ink); opacity:0; transform:scale(.45); }
     .random-winner.reveal { animation:winnerSnap 1.05s cubic-bezier(.15,.85,.18,1) both; }
     @keyframes winnerSnap { 0%{opacity:0;transform:scale(.35) translateY(-30px);filter:blur(8px)} 55%{opacity:1;transform:scale(1.16);filter:none;text-shadow:0 0 45px var(--accent)} 76%{transform:scale(.94)} 100%{opacity:1;transform:scale(1);text-shadow:0 0 18px color-mix(in srgb,var(--accent) 55%,transparent)} }
@@ -389,8 +387,38 @@
     .drone.active { display:block; animation:droneFlight 3.6s cubic-bezier(.2,.62,.25,1) both; }
     .drone-body { position:relative; z-index:2; text-align:center; font-size:58px; transform:scaleX(1.7); text-shadow:0 0 18px var(--accent); }
     .tractor-beam { position:absolute; top:52px; left:28px; width:64px; height:230px; clip-path:polygon(42% 0,58% 0,100% 100%,0 100%); background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 68%,transparent),transparent); opacity:.65; filter:blur(1px); animation:beamPulse .28s ease-in-out infinite alternate; }
-    @keyframes droneFlight { 0%{left:-160px;top:10%;transform:rotate(-8deg)} 30%{left:66%;top:18%;transform:rotate(7deg)} 55%{left:24%;top:32%;transform:rotate(-5deg)} 78%,92%{left:var(--drone-x);top:var(--drone-y);transform:rotate(0)} 100%{left:110%;top:8%;transform:rotate(10deg)} }
     @keyframes beamPulse { to{opacity:.9;filter:brightness(1.5)} }
+    /* Calm, centered random-selector motion and shared winner reveal */
+    .random-stage .content { padding-bottom:210px; }
+    .random-field { min-height:360px; align-content:center; align-items:center; overflow:hidden; width:100%; }
+    .random-name.candidate-scan { opacity:1; border-color:color-mix(in srgb,var(--accent) 58%,var(--line)); box-shadow:0 0 13px color-mix(in srgb,var(--accent) 30%,transparent); transform:translateY(-3px) scale(1.035); }
+    .random-name.selected-breathe { opacity:1; border-color:var(--accent); animation:calmThrum 1.4s ease-in-out infinite; z-index:42; }
+    @keyframes calmThrum { 0%,100%{box-shadow:0 0 10px color-mix(in srgb,var(--accent) 30%,transparent),0 0 0 0 color-mix(in srgb,var(--accent) 18%,transparent);filter:brightness(1)} 50%{box-shadow:0 0 25px color-mix(in srgb,var(--accent) 72%,transparent),0 0 50px color-mix(in srgb,var(--accent) 34%,transparent),0 0 0 8px color-mix(in srgb,var(--accent) 8%,transparent);filter:brightness(1.16)} }
+    .random-winner { inset:85px 8% 205px; min-height:0; display:flex; align-items:center; justify-content:center; opacity:1; transform:none; }
+    .random-winner.reveal { animation:none; }
+    .random-winner .random-name { font-size:clamp(34px,6vw,82px); padding:22px 38px; max-width:90%; white-space:normal; text-align:center; animation:winnerPillArrive .9s cubic-bezier(.16,.82,.2,1) both,calmThrum 1.4s ease-in-out .9s infinite; }
+    .random-winner .random-name.to-tray { animation:winnerToTray .6s cubic-bezier(.4,0,.7,.2) both; }
+    @keyframes winnerPillArrive { 0%{opacity:.8;transform:translate(var(--winner-from-x),var(--winner-from-y)) scale(.42);filter:blur(2px)} 62%{opacity:1;transform:translate(0,0) scale(1.12);filter:none} 80%{transform:scale(.96)} 100%{transform:scale(1)} }
+    @keyframes winnerToTray { to{opacity:0;transform:translateY(34vh) scale(.22);filter:blur(2px)} }
+    .random-field.reactor .random-name { animation-duration:3.4s; }
+    .random-field.carousel { position:relative; display:block; min-height:390px; overflow:hidden; animation:none; }
+    .random-field.carousel .random-name { position:absolute; left:50%; top:50%; margin:0; animation:carouselRevolutions var(--carousel-duration,4.6s) cubic-bezier(.12,.72,.16,1) both; animation-delay:0s; }
+    @keyframes carouselRevolutions { 0%{transform:translate(-50%,-50%) rotate(var(--ca0)) translateX(var(--carousel-radius)) rotate(var(--cc0))} 32%{transform:translate(-50%,-50%) rotate(var(--ca1)) translateX(var(--carousel-radius)) rotate(var(--cc1));filter:brightness(1.25)} 68%{transform:translate(-50%,-50%) rotate(var(--ca2)) translateX(var(--carousel-radius)) rotate(var(--cc2))} 100%{transform:translate(-50%,-50%) rotate(var(--ca3)) translateX(var(--carousel-radius)) rotate(var(--cc3));filter:none} }
+    .random-field.scanner { min-height:390px; align-content:center; }
+    .drone { width:138px;height:76px;left:var(--d0x,-160px);top:var(--d0y,40px);filter:drop-shadow(0 0 13px color-mix(in srgb,var(--accent) 70%,transparent)); }
+    .drone.active { animation:droneSearch var(--drone-duration,4.5s) cubic-bezier(.24,.55,.22,1) both; }
+    .drone-body { width:120px;height:46px;margin:auto;border-radius:50%;font-size:0;transform:none;background:radial-gradient(ellipse at 50% 68%,color-mix(in srgb,var(--accent) 24%,transparent),transparent 58%),linear-gradient(180deg,rgba(255,255,255,.22),color-mix(in srgb,var(--accent-strong) 25%,transparent));border:1px solid color-mix(in srgb,var(--accent) 75%,white);box-shadow:inset 0 0 22px rgba(255,255,255,.10),0 0 20px color-mix(in srgb,var(--accent) 38%,transparent);backdrop-filter:blur(5px);opacity:.78; }
+    .drone-body span { display:block;width:28px;height:9px;margin:18px auto;border-radius:50%;background:var(--accent);box-shadow:0 0 16px var(--accent);opacity:.85; }
+    .tractor-beam { top:39px;left:29px;width:80px;height:260px;clip-path:polygon(44% 0,56% 0,100% 100%,0 100%);background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 45%,transparent),color-mix(in srgb,var(--accent) 12%,transparent) 62%,transparent);opacity:.42;filter:blur(4px); }
+    @keyframes droneSearch { 0%{left:var(--d0x);top:var(--d0y);transform:rotate(var(--dr0))} 25%{left:var(--d1x);top:var(--d1y);transform:rotate(var(--dr1))} 49%{left:var(--d2x);top:var(--d2y);transform:rotate(var(--dr2))} 70%{left:var(--d3x);top:var(--d3y);transform:rotate(var(--dr3))} 84%,94%{left:var(--target-x);top:var(--target-y);transform:rotate(0)} 100%{left:var(--d4x);top:var(--d4y);transform:rotate(var(--dr4));opacity:.3} }
+    .removed-tray { position:absolute; left:24px; right:24px; bottom:91px; z-index:35; border:1px solid var(--line); border-radius:14px; background:color-mix(in srgb,var(--panel-soft) 88%,transparent); backdrop-filter:blur(10px); padding:8px 10px 10px; box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 0 18px color-mix(in srgb,var(--accent) 8%,transparent); }
+    .removed-tray.empty { display:none; }
+    .removed-tray-head { display:flex;align-items:center;gap:9px;color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;margin-bottom:7px; }
+    .removed-tray-head button { margin-left:auto;min-height:26px;padding:4px 8px;font-size:10px;text-transform:none; }
+    .removed-tray-pills { display:flex;flex-wrap:wrap;gap:6px; }
+    .removed-pill { border:1px solid var(--line);border-radius:999px;padding:6px 9px;background:var(--panel);color:var(--muted);font-size:12px;font-weight:800;cursor:pointer; }
+    .removed-pill:hover { color:var(--ink);border-color:var(--accent);box-shadow:0 0 12px color-mix(in srgb,var(--accent) 25%,transparent); }
+    body.random-presentation .random-stage .content { padding-bottom:220px; }
     body.random-presentation .top-tabs,body.random-presentation .random-controls,body.random-presentation #randomStageHeader { display:none; }
     body.random-presentation .random-app { display:block; max-width:none; }
     body.random-presentation .random-stage { border:0; box-shadow:none; min-height:100vh; }
@@ -923,7 +951,11 @@
       <div class="content">
         <div class="random-field" id="randomField"></div>
         <div class="random-winner" id="randomWinner" aria-live="polite"></div>
-        <div class="drone" id="selectorDrone" aria-hidden="true"><div class="drone-body">◆</div><div class="tractor-beam"></div></div>
+        <div class="drone" id="selectorDrone" aria-hidden="true"><div class="drone-body"><span></span></div><div class="tractor-beam"></div></div>
+        <div class="removed-tray" id="removedStudentTray">
+          <div class="removed-tray-head"><span>Previously Selected</span><span id="removedTrayCount"></span><button id="restoreAllTrayBtn" type="button">Restore all</button></div>
+          <div class="removed-tray-pills" id="removedTrayPills"></div>
+        </div>
         <div class="random-dock"><button class="primary random-choose" id="chooseStudentBtn" type="button">Choose a Student!</button><button id="skipRandomBtn" type="button" hidden>Skip animation</button></div>
       </div>
     </section>
@@ -1951,13 +1983,22 @@
         if(!removed.size) { list.innerHTML='<p class="hint">No names have been removed.</p>'; }
         removed.forEach((id)=>{ if(!byId.has(id)) return; appendRemovableRule("selectedStudentHistory",byId.get(id).name,()=>{ removed.delete(id); renderRandomHistory(); prepareRandomBoard(); },"Restore"); });
         $("restoreAllStudentsBtn").disabled=!removed.size;
+        renderRemovedTray();
+      }
+      function renderRemovedTray() {
+        const entry=selectedRandomRoster(), tray=$("removedStudentTray"), pills=$("removedTrayPills"); pills.innerHTML="";
+        if(!entry){tray.classList.add("empty");return;}
+        const removed=randomRemovedSet(entry), byId=new Map((entry.data.students||[]).map((student)=>[student.id,student]));
+        tray.classList.toggle("empty",!removed.size); $("removedTrayCount").textContent=removed.size?`${removed.size} resting`:"";
+        removed.forEach((id)=>{if(!byId.has(id))return;const pill=document.createElement("button");pill.type="button";pill.className="removed-pill";pill.textContent=byId.get(id).name;pill.title="Restore to the active name pool";pill.addEventListener("click",()=>{removed.delete(id);renderRandomHistory();prepareRandomBoard();});pills.appendChild(pill);});
       }
       function prepareRandomBoard() {
-        const entry=selectedRandomRoster(); const field=$("randomField"); field.className="random-field"; field.innerHTML=""; $("randomWinner").className="random-winner"; $("randomWinner").textContent=""; $("selectorDrone").className="drone";
+        const entry=selectedRandomRoster(); const field=$("randomField"); field.className="random-field"; field.innerHTML=""; $("randomWinner").className="random-winner"; $("randomWinner").innerHTML=""; $("selectorDrone").className="drone";
         if(!entry){ $("randomTitle").textContent="Random Student"; $("randomSubtitle").textContent="Choose a roster to begin."; $("randomStatus").textContent="Select a saved roster to begin."; $("chooseStudentBtn").disabled=true; renderRandomHistory(); return; }
         const eligible=randomParticipants(entry); const total=randomParticipants(entry,true).length; const removed=randomRemovedSet(entry);
         $("randomTitle").textContent=entry.name; $("randomSubtitle").textContent=`${eligible.length} of ${total} names eligible`;
-        eligible.forEach((student,index)=>{ const pill=document.createElement("span"); pill.className="random-name"; pill.dataset.studentId=student.id; pill.textContent=student.name; pill.style.setProperty("--random-delay",`${(index%12)*.035}s`); pill.style.setProperty("--rx",`${Math.round((Math.random()-.5)*42)}vw`); pill.style.setProperty("--ry",`${Math.round((Math.random()-.5)*34)}vh`); pill.style.setProperty("--rr",`${Math.round((Math.random()-.5)*600)}deg`); pill.style.setProperty("--rr2",`${Math.round((Math.random()-.5)*900)}deg`); field.appendChild(pill); });
+        eligible.forEach((student,index)=>{ const pill=document.createElement("span"); pill.className="random-name"; pill.dataset.studentId=student.id; pill.textContent=student.name; pill.style.setProperty("--random-delay",`${(index%12)*.035}s`); pill.style.setProperty("--rr",`${Math.round((Math.random()-.5)*600)}deg`); pill.style.setProperty("--rr2",`${Math.round((Math.random()-.5)*900)}deg`); field.appendChild(pill); });
+        requestAnimationFrame(()=>{const maxX=Math.max(30,field.clientWidth*.34),maxY=Math.max(25,field.clientHeight*.30);[...field.children].forEach((pill)=>{pill.style.setProperty("--rx",`${Math.round((Math.random()-.5)*2*maxX)}px`);pill.style.setProperty("--ry",`${Math.round((Math.random()-.5)*2*maxY)}px`);});});
         $("chooseStudentBtn").disabled=!eligible.length;
         $("randomStatus").textContent=removed.size?`${eligible.length} names remain · ${removed.size} available to restore`:`${eligible.length} names ready`;
         renderRandomHistory();
@@ -1966,29 +2007,35 @@
         const field=$("randomField"), pills=[...field.querySelectorAll(".random-name")], winnerPill=pills.find((pill)=>pill.dataset.studentId===winner.id), type=$("randomAnimationSelect").value;
         randomAnimationSkip=false; $("chooseStudentBtn").disabled=true; $("skipRandomBtn").hidden=false;
         if(type==="drone") {
-          const drone=$("selectorDrone"), stage=$('randomApp').querySelector('.random-stage .content'), stageRect=stage.getBoundingClientRect(), targetRect=winnerPill.getBoundingClientRect();
-          drone.style.setProperty("--drone-x",`${Math.max(20,targetRect.left-stageRect.left-35)}px`); drone.style.setProperty("--drone-y",`${Math.max(35,targetRect.top-stageRect.top-95)}px`); drone.className="drone active";
-          const falsePills=pills.filter((pill)=>pill!==winnerPill).sort(()=>Math.random()-.5).slice(0,3);
-          for(const pill of falsePills){ if(randomAnimationSkip) break; pill.classList.add("electric-target"); await pause(330); pill.classList.remove("electric-target"); }
-          if(!randomAnimationSkip){ pills.forEach((pill)=>pill!==winnerPill&&pill.classList.add("dimmed")); winnerPill.classList.add("electric-target"); await pause(2300); }
+          const drone=$("selectorDrone"), stage=$("randomApp").querySelector(".random-stage .content"), stageRect=stage.getBoundingClientRect(), targetRect=winnerPill.getBoundingClientRect(), duration=3000+Math.random()*3000;
+          const falsePills=pills.filter((pill)=>pill!==winnerPill).sort(()=>Math.random()-.5).slice(0,3), pointFor=(pill)=>{const rect=pill.getBoundingClientRect();return{x:Math.max(5,rect.left-stageRect.left+rect.width/2-69),y:Math.max(5,rect.top-stageRect.top-150)};};
+          const points=falsePills.map(pointFor);while(points.length<3)points.push({x:stage.clientWidth*(.15+Math.random()*.65),y:stage.clientHeight*(.06+Math.random()*.45)});
+          const target=pointFor(winnerPill),fromLeft=Math.random()<.5,startX=fromLeft?-170:stage.clientWidth+30,endX=fromLeft?stage.clientWidth+40:-180;
+          [["--d0x",startX],["--d0y",20+Math.random()*stage.clientHeight*.35],["--d1x",points[0].x],["--d1y",points[0].y],["--d2x",points[1].x],["--d2y",points[1].y],["--d3x",points[2].x],["--d3y",points[2].y],["--target-x",target.x],["--target-y",target.y],["--d4x",endX],["--d4y",10+Math.random()*stage.clientHeight*.25]].forEach(([name,value])=>drone.style.setProperty(name,`${value}px`));
+          ["--dr0","--dr1","--dr2","--dr3","--dr4"].forEach((name)=>drone.style.setProperty(name,`${Math.round((Math.random()-.5)*20)}deg`));drone.style.setProperty("--drone-duration",`${duration}ms`);drone.className="drone active";
+          for(let index=0;index<falsePills.length&&!randomAnimationSkip;index++){await pause(duration*(index===0?.22:.20));falsePills[index].classList.add("candidate-scan");await pause(260);falsePills[index].classList.remove("candidate-scan");}
+          const elapsed=duration*(.22+.20*Math.max(0,falsePills.length-1));await pause(Math.max(0,duration*.84-elapsed-260*falsePills.length));
+          if(!randomAnimationSkip){winnerPill.classList.add("selected-breathe");await pause(duration*.16+650);}
         } else {
           field.classList.add(type);
+          let duration=type==="carousel"?4800:3200;
+          if(type==="carousel"){const radius=Math.max(115,Math.min(field.clientWidth*.36,field.clientHeight*.40,290)),turns=4;pills.forEach((pill,index)=>{const startAngle=index/pills.length*360,endAngle=startAngle+turns*360;pill.style.setProperty("--carousel-radius",`${radius}px`);pill.style.setProperty("--carousel-duration",`${duration}ms`);[["--ca0",startAngle],["--ca1",startAngle+720],["--ca2",startAngle+1260],["--ca3",endAngle],["--cc0",-startAngle],["--cc1",-(startAngle+720)],["--cc2",-(startAngle+1260)],["--cc3",-endAngle]].forEach(([name,value])=>pill.style.setProperty(name,`${value}deg`));});}
           const start=Date.now(); let last=null;
-          while(Date.now()-start<2950&&!randomAnimationSkip){ if(last) last.classList.remove("electric-target"); last=pills[secureRandomIndex(pills.length)]; last.classList.add("electric-target"); await pause(115+Math.min(170,(Date.now()-start)/14)); }
-          if(last) last.classList.remove("electric-target");
-          pills.forEach((pill)=>pill!==winnerPill&&pill.classList.add("dimmed")); winnerPill.classList.add("electric-target");
+          while(Date.now()-start<duration&&!randomAnimationSkip){ if(last) last.classList.remove("candidate-scan"); last=pills[secureRandomIndex(pills.length)]; last.classList.add("candidate-scan"); await pause(125+Math.min(210,(Date.now()-start)/18)); }
+          if(last) last.classList.remove("candidate-scan");
+          winnerPill.classList.add("selected-breathe"); await pause(randomAnimationSkip?0:750);
         }
-        field.className="random-field"; $("selectorDrone").className="drone";
-        winnerPill?.classList.add("electric-target");
-        const display=$("randomWinner"); display.textContent=winner.name; display.className="random-winner"; void display.offsetWidth; display.classList.add("reveal");
-        await pause(matchMedia("(prefers-reduced-motion: reduce)").matches?50:1050);
+        const sourceRect=winnerPill.getBoundingClientRect();field.className="random-field";$("selectorDrone").className="drone";pills.forEach((pill)=>pill!==winnerPill&&pill.classList.add("dimmed"));winnerPill.className="random-name selected-breathe";
+        const display=$("randomWinner"),displayRect=display.getBoundingClientRect();winnerPill.style.setProperty("--winner-from-x",`${sourceRect.left+sourceRect.width/2-(displayRect.left+displayRect.width/2)}px`);winnerPill.style.setProperty("--winner-from-y",`${sourceRect.top+sourceRect.height/2-(displayRect.top+displayRect.height/2)}px`);display.innerHTML="";display.appendChild(winnerPill);
+        await pause(matchMedia("(prefers-reduced-motion: reduce)").matches?50:1450);
         $("skipRandomBtn").hidden=true; $("chooseStudentBtn").disabled=false;
+        return winnerPill;
       }
       async function chooseRandomStudent() {
         const entry=selectedRandomRoster(); if(!entry) return alert("Choose a saved roster first.");
         prepareRandomBoard(); const eligible=randomParticipants(entry); if(!eligible.length) return alert("No eligible names remain. Restore one or more students first.");
-        const winner=eligible[secureRandomIndex(eligible.length)]; await animateRandomSelection(winner);
-        if($("randomRemovalMode").value==="remove") { randomRemovedSet(entry).add(winner.id); $("randomField").querySelector(`[data-student-id="${winner.id}"]`)?.remove(); }
+        const winner=eligible[secureRandomIndex(eligible.length)],winnerPill=await animateRandomSelection(winner);
+        if($("randomRemovalMode").value==="remove") { randomRemovedSet(entry).add(winner.id); await pause(650); winnerPill?.classList.add("to-tray"); await pause(600); $("randomWinner").innerHTML=""; }
         renderRandomHistory(); const remaining=randomParticipants(entry).length; $("randomStatus").textContent=$("randomRemovalMode").value==="remove"?`${winner.name} selected · ${remaining} names remain`:`${winner.name} selected · all names remain eligible`;
       }
 
@@ -2270,6 +2317,7 @@
         $("chooseStudentBtn").addEventListener("click", chooseRandomStudent);
         $("skipRandomBtn").addEventListener("click", () => { randomAnimationSkip = true; });
         $("restoreAllStudentsBtn").addEventListener("click", () => { const entry=selectedRandomRoster(); if(entry){randomRemovedSet(entry).clear();renderRandomHistory();prepareRandomBoard();} });
+        $("restoreAllTrayBtn").addEventListener("click", () => { const entry=selectedRandomRoster(); if(entry){randomRemovedSet(entry).clear();renderRandomHistory();prepareRandomBoard();} });
         $("presentRandomBtn").addEventListener("click", async () => { if(!selectedRandomRoster()) return alert("Choose a saved roster first."); prepareRandomBoard(); document.body.classList.add("random-presentation"); try{await document.documentElement.requestFullscreen?.();}catch{} });
         $("groupRosterSelect").addEventListener("change", () => { renderPairRules(); prepareGroupBoard(); });
         $("groupSizeInput").addEventListener("change", prepareGroupBoard);
