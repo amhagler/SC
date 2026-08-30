@@ -348,8 +348,8 @@
     .countdown-display { position:fixed; inset:0; z-index:160; display:none; place-items:center; pointer-events:none; color:var(--accent); font-size:min(34vw,280px); font-weight:950; text-shadow:0 0 42px color-mix(in srgb,var(--accent) 70%,transparent); background:rgba(0,0,0,.20); }
     .countdown-display.show { display:grid; animation:countPulse .8s ease both; }
     @keyframes countPulse { 0%{opacity:0;transform:scale(.5)} 30%{opacity:1;transform:scale(1.08)} 100%{opacity:0;transform:scale(1.3)} }
-    .group-card li.land { animation:landName .62s cubic-bezier(.16,.8,.22,1) both; animation-delay:var(--land-delay); }
-    @keyframes landName { from{opacity:0;transform:translateY(-28px) scale(.82);filter:blur(3px)} to{opacity:1;transform:none;filter:none} }
+    .group-card li.land { animation:landName .78s cubic-bezier(.16,.8,.22,1) both; animation-delay:var(--land-delay); transform-origin:center; }
+    @keyframes landName { 0%{opacity:0;transform:translateY(-38px) scale(.62);filter:blur(4px)} 62%{opacity:1;transform:translateY(4px) scale(1.13);filter:none;text-shadow:0 0 18px var(--accent)} 80%{transform:translateY(-2px) scale(.96)} 100%{opacity:1;transform:none;filter:none;text-shadow:none} }
     body.presentation .top-tabs, body.presentation .group-controls, body.presentation #groupStageHeader { display: none; }
     body.presentation .group-app { display: block; max-width: none; }
     body.presentation .group-stage { border: 0; box-shadow: none; }
@@ -534,7 +534,7 @@
     }
   </style>
 </head>
-<body>
+<body data-skin="brass" data-uniform="silver">
   <nav class="top-tabs" aria-label="Tools">
     <button class="top-tab active" id="seatingTabBtn" type="button">Seating chart</button>
     <button class="top-tab" id="groupsTabBtn" type="button">Group randomizer</button>
@@ -870,8 +870,8 @@
         swapFirstId: null,
         printTheme: false,
         dark: false,
-        skin: "astrometrics",
-        uniform: "dark",
+        skin: "brass",
+        uniform: "silver",
         version: "teacher",
         chartTitle: "Classroom Seating Chart",
         teacher: "",
@@ -1105,7 +1105,7 @@
           state.previousPlacements = new Map(p.previousPlacements || []);
           state.students = Array.isArray(p.students) ? p.students : [];
           state.pairExclusions = Array.isArray(p.pairExclusions) ? p.pairExclusions : [];
-          state.skin = p.skin || "astrometrics";
+          state.skin = p.skin || "brass";
           state.uniform = p.uniform || (p.dark ? "dark" : "silver");
         } catch {
           localStorage.removeItem(STORAGE_KEY);
@@ -1190,8 +1190,8 @@
         document.documentElement.style.setProperty("--label-font", `${labelFont}px`);
         document.documentElement.style.setProperty("--gap", `${gap}px`);
         document.body.classList.remove("dark");
-        document.body.dataset.skin = state.skin || "astrometrics";
-        document.body.dataset.uniform = state.uniform || "dark";
+        document.body.dataset.skin = state.skin || "brass";
+        document.body.dataset.uniform = state.uniform || "silver";
         document.body.classList.toggle("print-light", state.printTheme);
         $("chartPanel").classList.toggle("print-student", state.version === "student");
       }
@@ -1811,12 +1811,13 @@
         $("countdownDisplay").classList.remove("show");
       }
 
-      async function playGroupAnimation(students) {
+      async function playGroupAnimation() {
         const layer=$("shuffleLayer");
         const type=$("groupAnimationSelect").value;
         layer.className=`shuffle-layer active ${type}`;
         layer.innerHTML="";
-        students.forEach((student,index)=>{ const chip=document.createElement("span"); const spin=Math.round((Math.random()-.5)*900); chip.className="shuffle-chip"; chip.textContent=student.name; chip.style.setProperty("--delay",`${(index%9)*.035}s`); chip.style.setProperty("--x",`${Math.round((Math.random()-.5)*72)}vw`); chip.style.setProperty("--y",`${Math.round((Math.random()-.5)*62)}vh`); chip.style.setProperty("--x2",`${Math.round((Math.random()-.5)*90)}vw`); chip.style.setProperty("--y2",`${Math.round((Math.random()-.5)*80)}vh`); chip.style.setProperty("--spin",`${spin}deg`); chip.style.setProperty("--spin2",`${spin*-1.7}deg`); chip.style.setProperty("--lane",`${10+Math.random()*78}%`); layer.appendChild(chip); });
+        const chips=[...$("groupNamePool").querySelectorAll(".name-chip")];
+        chips.forEach((chip,index)=>{ const spin=Math.round((Math.random()-.5)*900); chip.className="shuffle-chip"; chip.style.setProperty("--delay",`${(index%9)*.035}s`); chip.style.setProperty("--x",`${Math.round((Math.random()-.5)*72)}vw`); chip.style.setProperty("--y",`${Math.round((Math.random()-.5)*62)}vh`); chip.style.setProperty("--x2",`${Math.round((Math.random()-.5)*90)}vw`); chip.style.setProperty("--y2",`${Math.round((Math.random()-.5)*80)}vh`); chip.style.setProperty("--spin",`${spin}deg`); chip.style.setProperty("--spin2",`${spin*-1.7}deg`); chip.style.setProperty("--lane",`${10+Math.random()*78}%`); layer.appendChild(chip); });
         const reduced=matchMedia("(prefers-reduced-motion: reduce)").matches;
         const duration=reduced?50:3800;
         for(let elapsed=0;elapsed<duration&&!animationSkipRequested;elapsed+=100) await pause(100);
@@ -1826,6 +1827,7 @@
       async function generateGroups() {
         const entry=selectedGroupRoster();
         if(!entry) return alert("Choose a saved roster first.");
+        prepareGroupBoard();
         let result;
         try { result=calculateGroups(entry); } catch(error){ $("groupStatus").textContent=error.message; if(document.body.classList.contains("presentation")){ document.body.classList.remove("presentation"); document.exitFullscreen?.(); } alert(error.message); return; }
         if (result.hard) {
@@ -1838,7 +1840,7 @@
         animationSkipRequested=false;
         $("showGenerateBtn").disabled=true; $("skipAnimationBtn").hidden=false;
         await runCountdown();
-        if(!animationSkipRequested) await playGroupAnimation(result.groups.flat());
+        if(!animationSkipRequested) await playGroupAnimation();
         renderFinalGroups(result);
         $("showGenerateBtn").disabled=false; $("skipAnimationBtn").hidden=true;
         const data=groupSettings(entry); data.previousGroups=result.groups.map((group)=>group.map((student)=>student.id)); saveLibrary();
@@ -1987,8 +1989,8 @@
         $("nameStyleSelect").value = state.nameStyle || "smart";
         $("autoAdvanceInput").checked = !!state.autoAdvance;
         $("versionSelect").value = state.version;
-        $("skinSelect").value = state.skin || "astrometrics";
-        $("uniformSelect").value = state.uniform || "dark";
+        $("skinSelect").value = state.skin || "brass";
+        $("uniformSelect").value = state.uniform || "silver";
         $("printThemeBtn").textContent = `Print theme: ${state.printTheme ? "On" : "Off"}`;
         $("chartTitleInput").value = state.chartTitle;
         $("teacherInput").value = state.teacher;
@@ -2218,8 +2220,20 @@
         $("resetBtn").addEventListener("click", () => {
           if (!confirm("Reset the active room, roster, and seating? Your saved rooms and rosters will be kept.")) return;
           pushHistory();
-          localStorage.removeItem(STORAGE_KEY);
-          location.reload();
+          const preservedSkin = state.skin;
+          const preservedUniform = state.uniform;
+          Object.assign(state, {
+            step: "build", tool: "desk", rows: 8, cols: 10, students: [], pairExclusions: [],
+            selectedStudentId: null, swapMode: false, swapFirstId: null, printTheme: false,
+            dark: preservedUniform === "dark", skin: preservedSkin, uniform: preservedUniform,
+            version: "teacher", chartTitle: "Classroom Seating Chart", teacher: "",
+            date: new Date().toISOString().slice(0, 10), avoidPrevious: true,
+            legibility: 50, nameStyle: "smart", autoAdvance: true
+          });
+          state.desks = new Set(); state.paths = new Set(); state.labels = new Map();
+          state.placements = new Map(); state.previousPlacements = new Map();
+          render(); save();
+          announce("Active chart reset. Appearance and saved library were kept.");
         });
         ["chartTitleInput", "teacherInput", "dateInput"].forEach((id) => {
           $(id).addEventListener("input", (e) => {
