@@ -359,6 +359,51 @@
     body.presentation .name-chip { font-size:clamp(14px,1.45vw,22px); }
     @media (prefers-reduced-motion:reduce) { .shuffle-chip,.group-card li.land,.countdown-display.show { animation-duration:.01ms !important; animation-delay:0ms !important; } }
 
+    .random-app { max-width:1480px; margin:0 auto; display:none; grid-template-columns:360px minmax(0,1fr); gap:16px; align-items:start; position:relative; z-index:1; }
+    .random-app.active { display:grid; }
+    .random-stage { min-height:650px; }
+    .random-stage .content { min-height:590px; position:relative; padding:28px 24px 100px; overflow:hidden; }
+    .random-field { display:flex; flex-wrap:wrap; justify-content:center; align-content:flex-start; gap:10px; max-width:1100px; margin:auto; position:relative; z-index:4; }
+    .random-name { padding:10px 15px; border-radius:999px; border:1px solid var(--line); background:linear-gradient(135deg,color-mix(in srgb,var(--panel-soft) 86%,var(--accent) 10%),var(--panel-soft)); color:var(--ink); font-size:clamp(14px,1.55vw,22px); font-weight:900; box-shadow:0 0 14px color-mix(in srgb,var(--accent) 11%,transparent); transition:opacity .25s,filter .25s,transform .25s; }
+    .random-name.dimmed { opacity:.22; filter:grayscale(.7); }
+    .random-name.electric-target { opacity:1; transform:scale(1.22); border-color:var(--accent); z-index:12; animation:electricLock .18s steps(2,end) infinite; }
+    @keyframes electricLock { 0%{box-shadow:0 0 8px var(--accent),-8px 0 16px color-mix(in srgb,var(--accent-strong) 70%,transparent)} 100%{box-shadow:0 0 28px var(--accent),8px -5px 18px color-mix(in srgb,var(--accent) 75%,transparent),-4px 7px 12px white} }
+    .random-winner { position:absolute; inset:135px 12% auto; min-height:150px; display:grid; place-items:center; text-align:center; pointer-events:none; z-index:30; font-size:clamp(38px,7vw,96px); font-weight:950; color:var(--ink); opacity:0; transform:scale(.45); }
+    .random-winner.reveal { animation:winnerSnap 1.05s cubic-bezier(.15,.85,.18,1) both; }
+    @keyframes winnerSnap { 0%{opacity:0;transform:scale(.35) translateY(-30px);filter:blur(8px)} 55%{opacity:1;transform:scale(1.16);filter:none;text-shadow:0 0 45px var(--accent)} 76%{transform:scale(.94)} 100%{opacity:1;transform:scale(1);text-shadow:0 0 18px color-mix(in srgb,var(--accent) 55%,transparent)} }
+    .random-dock { position:absolute; left:0; right:0; bottom:24px; z-index:40; display:flex; justify-content:center; gap:10px; }
+    .random-choose { min-width:240px; min-height:58px; border-radius:999px; font-size:20px; }
+    .random-choose:disabled { opacity:.58; cursor:wait; }
+    .random-field.reactor .random-name { animation:reactorSpin 2.9s cubic-bezier(.4,0,.2,1) both; animation-delay:var(--random-delay); }
+    @keyframes reactorSpin { 0%{transform:none} 35%{transform:translate(var(--rx),var(--ry)) rotate(var(--rr));filter:brightness(1.5)} 72%{transform:translate(var(--ry),var(--rx)) rotate(var(--rr2));filter:brightness(.8)} 100%{transform:none} }
+    .random-field.carousel { flex-wrap:nowrap; align-items:center; overflow:visible; animation:carouselField 3.2s cubic-bezier(.2,.7,.2,1) both; }
+    .random-field.carousel .random-name { flex:0 0 auto; animation:carouselBob .34s ease-in-out infinite alternate; animation-delay:var(--random-delay); }
+    @keyframes carouselField { 0%{transform:perspective(700px) rotateY(0) translateX(0)} 38%{transform:perspective(700px) rotateY(-18deg) translateX(-24%)} 72%{transform:perspective(700px) rotateY(14deg) translateX(19%)} 100%{transform:none} }
+    @keyframes carouselBob { to{transform:translateY(-12px) scale(1.06);filter:brightness(1.45)} }
+    .random-field.scanner { display:grid; grid-template-columns:repeat(auto-fit,minmax(135px,1fr)); width:100%; }
+    .random-field.scanner::after { content:""; position:absolute; left:0; right:0; height:4px; top:0; background:var(--accent); box-shadow:0 0 18px var(--accent),0 0 42px var(--accent); animation:scannerSweep 2.9s ease-in-out both; }
+    .random-field.scanner .random-name { animation:scanCandidate .36s ease-in-out infinite alternate; animation-delay:var(--random-delay); }
+    @keyframes scannerSweep { 0%{top:0;opacity:0} 12%{opacity:1} 48%{top:92%} 72%{top:28%} 100%{top:55%;opacity:0} }
+    @keyframes scanCandidate { to{filter:brightness(1.65);border-color:var(--accent);transform:scale(1.035)} }
+    .drone { position:absolute; left:-180px; top:90px; z-index:25; width:120px; height:80px; display:none; color:var(--accent); filter:drop-shadow(0 0 14px var(--accent)); }
+    .drone.active { display:block; animation:droneFlight 3.6s cubic-bezier(.2,.62,.25,1) both; }
+    .drone-body { position:relative; z-index:2; text-align:center; font-size:58px; transform:scaleX(1.7); text-shadow:0 0 18px var(--accent); }
+    .tractor-beam { position:absolute; top:52px; left:28px; width:64px; height:230px; clip-path:polygon(42% 0,58% 0,100% 100%,0 100%); background:linear-gradient(to bottom,color-mix(in srgb,var(--accent) 68%,transparent),transparent); opacity:.65; filter:blur(1px); animation:beamPulse .28s ease-in-out infinite alternate; }
+    @keyframes droneFlight { 0%{left:-160px;top:10%;transform:rotate(-8deg)} 30%{left:66%;top:18%;transform:rotate(7deg)} 55%{left:24%;top:32%;transform:rotate(-5deg)} 78%,92%{left:var(--drone-x);top:var(--drone-y);transform:rotate(0)} 100%{left:110%;top:8%;transform:rotate(10deg)} }
+    @keyframes beamPulse { to{opacity:.9;filter:brightness(1.5)} }
+    body.random-presentation .top-tabs,body.random-presentation .random-controls,body.random-presentation #randomStageHeader { display:none; }
+    body.random-presentation .random-app { display:block; max-width:none; }
+    body.random-presentation .random-stage { border:0; box-shadow:none; min-height:100vh; }
+    body.random-presentation .random-stage .content { min-height:100vh; padding:35px 35px 110px; }
+
+    .sync-success { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.7); z-index:300; pointer-events:none; opacity:0; padding:20px 34px; border:2px solid var(--accent); border-radius:18px; background:color-mix(in srgb,var(--panel) 90%,transparent); color:var(--ink); font-size:clamp(24px,4vw,54px); font-weight:950; letter-spacing:.08em; text-align:center; box-shadow:0 0 42px var(--accent),inset 0 0 28px color-mix(in srgb,var(--accent) 22%,transparent); }
+    body.sync-flash .sync-success { animation:syncMessage 2s ease-in-out both; }
+    body.sync-flash .panel,body.sync-flash .top-tabs,body.sync-flash .group-card,body.sync-flash .grid,body.sync-flash .random-name { animation:syncWalls 2s ease-in-out both; }
+    @keyframes syncWalls { 0%{border-color:var(--line);box-shadow:var(--shadow)} 28%{border-color:var(--accent);box-shadow:0 0 15px var(--accent),0 0 48px var(--accent),inset 0 0 20px color-mix(in srgb,var(--accent) 28%,transparent)} 58%{filter:brightness(1.35)} 76%{border-color:var(--accent);box-shadow:0 0 10px var(--accent),0 0 30px color-mix(in srgb,var(--accent) 70%,transparent)} 100%{filter:none} }
+    @keyframes syncMessage { 0%{opacity:0;transform:translate(-50%,-50%) scale(.55)} 24%,72%{opacity:1;transform:translate(-50%,-50%) scale(1)} 45%{filter:brightness(1.6)} 100%{opacity:0;transform:translate(-50%,-50%) scale(1.08)} }
+    @media (max-width:1100px){.random-app{grid-template-columns:1fr}}
+    @media (prefers-reduced-motion:reduce){.random-field .random-name,.random-field.carousel,.drone.active{animation-duration:.01ms!important}.sync-success{animation-duration:.2s!important}}
+
     .stage-tools {
       display: flex;
       flex-wrap: wrap;
@@ -538,6 +583,7 @@
   <nav class="top-tabs" aria-label="Tools">
     <button class="top-tab active" id="seatingTabBtn" type="button">Seating chart</button>
     <button class="top-tab" id="groupsTabBtn" type="button">Group randomizer</button>
+    <button class="top-tab" id="randomTabBtn" type="button">Random student</button>
     <div class="backup-actions">
       <button id="saveJsonBtn" type="button">Choose backup file</button>
       <button id="syncJsonBtn" class="primary" type="button" disabled>Sync JSON</button>
@@ -847,6 +893,43 @@
     </section>
   </main>
 
+  <main class="random-app" id="randomApp">
+    <aside class="panel random-controls">
+      <div class="header"><div><h1>Random Student</h1><p class="sub">A fair holographic name selector.</p></div></div>
+      <div class="content">
+        <label>Saved roster<select id="randomRosterSelect"><option value="">Choose a saved roster…</option></select></label>
+        <label style="margin-top:10px">Animation
+          <select id="randomAnimationSelect">
+            <option value="reactor">Name Reactor</option>
+            <option value="carousel">Holographic Carousel</option>
+            <option value="scanner">Scanner Grid</option>
+            <option value="drone">Drone Lock</option>
+          </select>
+        </label>
+        <label style="margin-top:10px">After selection
+          <select id="randomRemovalMode"><option value="keep">Keep all names eligible</option><option value="remove">Remove selected name</option></select>
+        </label>
+        <div class="row" style="margin-top:12px"><button id="prepareRandomBtn" type="button">Prepare board</button><button id="presentRandomBtn" type="button">Present full screen</button></div>
+        <p class="hint" id="randomStatus">Select a saved roster to begin.</p>
+        <section class="section">
+          <div class="section-title">Previously selected</div>
+          <div class="pair-list" id="selectedStudentHistory"><p class="hint">No names have been removed.</p></div>
+          <button id="restoreAllStudentsBtn" type="button" style="margin-top:9px">Restore all names</button>
+        </section>
+      </div>
+    </aside>
+    <section class="panel random-stage">
+      <div class="header" id="randomStageHeader"><div><h2 id="randomTitle">Random Student</h2><p class="sub" id="randomSubtitle">Choose a roster to begin.</p></div></div>
+      <div class="content">
+        <div class="random-field" id="randomField"></div>
+        <div class="random-winner" id="randomWinner" aria-live="polite"></div>
+        <div class="drone" id="selectorDrone" aria-hidden="true"><div class="drone-body">◆</div><div class="tractor-beam"></div></div>
+        <div class="random-dock"><button class="primary random-choose" id="chooseStudentBtn" type="button">Choose a Student!</button><button id="skipRandomBtn" type="button" hidden>Skip animation</button></div>
+      </div>
+    </section>
+  </main>
+  <div class="sync-success" id="syncSuccess" role="status" aria-live="polite">Sync Successful</div>
+
   <script>
     (() => {
       const STORAGE_KEY = "seating_chart_generator_v5";
@@ -972,6 +1055,7 @@
         fill("roomLibrarySelect", library.rooms, "Choose a saved room…");
         fill("rosterLibrarySelect", library.rosters, "Choose a saved roster…");
         fill("groupRosterSelect", library.rosters, "Choose a saved roster…");
+        fill("randomRosterSelect", library.rosters, "Choose a saved roster…");
         fill("chartLibrarySelect", library.charts, "Choose a saved arrangement…");
         $("libraryStatus").textContent = `${library.rooms.length}/4 rooms · ${library.rosters.length}/7 rosters · ${library.charts.length}/12 arrangements`;
       }
@@ -1623,7 +1707,7 @@
         return data;
       }
 
-      function appendRemovableRule(containerId, textValue, removeAction) {
+      function appendRemovableRule(containerId, textValue, removeAction, buttonText = "Remove") {
         const row = document.createElement("div");
         row.className = "pair-rule";
         const label = document.createElement("span");
@@ -1631,7 +1715,7 @@
         const remove = document.createElement("button");
         remove.type = "button";
         remove.className = "danger";
-        remove.textContent = "Remove";
+        remove.textContent = buttonText;
         remove.addEventListener("click", removeAction);
         row.append(label, remove);
         $(containerId).appendChild(row);
@@ -1847,6 +1931,72 @@
         $("groupStatus").textContent=result.hard ? `The best arrangement still has ${result.hard} hard-rule conflict(s). Adjust Settings or group size.` : "Groups generated. All hard rules were satisfied.";
       }
 
+      const randomRemovedByRoster = new Map();
+      let randomAnimationSkip = false;
+      function selectedRandomRoster() { return library.rosters.find((item) => item.name === $("randomRosterSelect").value); }
+      function randomRemovedSet(entry) { if(!randomRemovedByRoster.has(entry.name)) randomRemovedByRoster.set(entry.name,new Set()); return randomRemovedByRoster.get(entry.name); }
+      function randomParticipants(entry, includeRemoved=false) {
+        const data=groupSettings(entry); const absent=new Set(data.absentIds); const removed=randomRemovedSet(entry);
+        return (data.students||[]).filter((student)=>!absent.has(student.id)&&(includeRemoved||!removed.has(student.id)));
+      }
+      function secureRandomIndex(length) {
+        const max=0x100000000, limit=max-(max%length), values=new Uint32Array(1); let value;
+        do { crypto.getRandomValues(values); value=values[0]; } while(value>=limit);
+        return value%length;
+      }
+      function renderRandomHistory() {
+        const entry=selectedRandomRoster(); const list=$("selectedStudentHistory"); list.innerHTML="";
+        if(!entry) { list.innerHTML='<p class="hint">No names have been removed.</p>'; return; }
+        const removed=randomRemovedSet(entry); const byId=new Map((entry.data.students||[]).map((student)=>[student.id,student]));
+        if(!removed.size) { list.innerHTML='<p class="hint">No names have been removed.</p>'; }
+        removed.forEach((id)=>{ if(!byId.has(id)) return; appendRemovableRule("selectedStudentHistory",byId.get(id).name,()=>{ removed.delete(id); renderRandomHistory(); prepareRandomBoard(); },"Restore"); });
+        $("restoreAllStudentsBtn").disabled=!removed.size;
+      }
+      function prepareRandomBoard() {
+        const entry=selectedRandomRoster(); const field=$("randomField"); field.className="random-field"; field.innerHTML=""; $("randomWinner").className="random-winner"; $("randomWinner").textContent=""; $("selectorDrone").className="drone";
+        if(!entry){ $("randomTitle").textContent="Random Student"; $("randomSubtitle").textContent="Choose a roster to begin."; $("randomStatus").textContent="Select a saved roster to begin."; $("chooseStudentBtn").disabled=true; renderRandomHistory(); return; }
+        const eligible=randomParticipants(entry); const total=randomParticipants(entry,true).length; const removed=randomRemovedSet(entry);
+        $("randomTitle").textContent=entry.name; $("randomSubtitle").textContent=`${eligible.length} of ${total} names eligible`;
+        eligible.forEach((student,index)=>{ const pill=document.createElement("span"); pill.className="random-name"; pill.dataset.studentId=student.id; pill.textContent=student.name; pill.style.setProperty("--random-delay",`${(index%12)*.035}s`); pill.style.setProperty("--rx",`${Math.round((Math.random()-.5)*42)}vw`); pill.style.setProperty("--ry",`${Math.round((Math.random()-.5)*34)}vh`); pill.style.setProperty("--rr",`${Math.round((Math.random()-.5)*600)}deg`); pill.style.setProperty("--rr2",`${Math.round((Math.random()-.5)*900)}deg`); field.appendChild(pill); });
+        $("chooseStudentBtn").disabled=!eligible.length;
+        $("randomStatus").textContent=removed.size?`${eligible.length} names remain · ${removed.size} available to restore`:`${eligible.length} names ready`;
+        renderRandomHistory();
+      }
+      async function animateRandomSelection(winner) {
+        const field=$("randomField"), pills=[...field.querySelectorAll(".random-name")], winnerPill=pills.find((pill)=>pill.dataset.studentId===winner.id), type=$("randomAnimationSelect").value;
+        randomAnimationSkip=false; $("chooseStudentBtn").disabled=true; $("skipRandomBtn").hidden=false;
+        if(type==="drone") {
+          const drone=$("selectorDrone"), stage=$('randomApp').querySelector('.random-stage .content'), stageRect=stage.getBoundingClientRect(), targetRect=winnerPill.getBoundingClientRect();
+          drone.style.setProperty("--drone-x",`${Math.max(20,targetRect.left-stageRect.left-35)}px`); drone.style.setProperty("--drone-y",`${Math.max(35,targetRect.top-stageRect.top-95)}px`); drone.className="drone active";
+          const falsePills=pills.filter((pill)=>pill!==winnerPill).sort(()=>Math.random()-.5).slice(0,3);
+          for(const pill of falsePills){ if(randomAnimationSkip) break; pill.classList.add("electric-target"); await pause(330); pill.classList.remove("electric-target"); }
+          if(!randomAnimationSkip){ pills.forEach((pill)=>pill!==winnerPill&&pill.classList.add("dimmed")); winnerPill.classList.add("electric-target"); await pause(2300); }
+        } else {
+          field.classList.add(type);
+          const start=Date.now(); let last=null;
+          while(Date.now()-start<2950&&!randomAnimationSkip){ if(last) last.classList.remove("electric-target"); last=pills[secureRandomIndex(pills.length)]; last.classList.add("electric-target"); await pause(115+Math.min(170,(Date.now()-start)/14)); }
+          if(last) last.classList.remove("electric-target");
+          pills.forEach((pill)=>pill!==winnerPill&&pill.classList.add("dimmed")); winnerPill.classList.add("electric-target");
+        }
+        field.className="random-field"; $("selectorDrone").className="drone";
+        winnerPill?.classList.add("electric-target");
+        const display=$("randomWinner"); display.textContent=winner.name; display.className="random-winner"; void display.offsetWidth; display.classList.add("reveal");
+        await pause(matchMedia("(prefers-reduced-motion: reduce)").matches?50:1050);
+        $("skipRandomBtn").hidden=true; $("chooseStudentBtn").disabled=false;
+      }
+      async function chooseRandomStudent() {
+        const entry=selectedRandomRoster(); if(!entry) return alert("Choose a saved roster first.");
+        prepareRandomBoard(); const eligible=randomParticipants(entry); if(!eligible.length) return alert("No eligible names remain. Restore one or more students first.");
+        const winner=eligible[secureRandomIndex(eligible.length)]; await animateRandomSelection(winner);
+        if($("randomRemovalMode").value==="remove") { randomRemovedSet(entry).add(winner.id); $("randomField").querySelector(`[data-student-id="${winner.id}"]`)?.remove(); }
+        renderRandomHistory(); const remaining=randomParticipants(entry).length; $("randomStatus").textContent=$("randomRemovalMode").value==="remove"?`${winner.name} selected · ${remaining} names remain`:`${winner.name} selected · all names remain eligible`;
+      }
+
+      function triggerSyncSuccess() {
+        document.body.classList.remove("sync-flash"); void document.body.offsetWidth; document.body.classList.add("sync-flash");
+        setTimeout(()=>document.body.classList.remove("sync-flash"),2050);
+      }
+
       function createJsonBackup() {
         return JSON.stringify({
           format: "seating-tools-backup",
@@ -1911,6 +2061,7 @@
         const writable = await handle.createWritable();
         await writable.write(createJsonBackup());
         await writable.close();
+        triggerSyncSuccess();
       }
 
       async function saveJsonBackup() {
@@ -2098,17 +2249,28 @@
       function wire() {
         const showWorkspace = (name) => {
           const groups = name === "groups";
-          $("seatingApp").style.display = groups ? "none" : "grid";
+          const random = name === "random";
+          $("seatingApp").style.display = groups || random ? "none" : "grid";
           $("groupApp").classList.toggle("active", groups);
-          $("seatingTabBtn").classList.toggle("active", !groups);
+          $("randomApp").classList.toggle("active", random);
+          $("seatingTabBtn").classList.toggle("active", !groups && !random);
           $("groupsTabBtn").classList.toggle("active", groups);
+          $("randomTabBtn").classList.toggle("active", random);
           if (groups) {
             renderLibrary();
             renderPairRules();
           }
+          if (random) { renderLibrary(); prepareRandomBoard(); }
         };
         $("seatingTabBtn").addEventListener("click", () => showWorkspace("seating"));
         $("groupsTabBtn").addEventListener("click", () => showWorkspace("groups"));
+        $("randomTabBtn").addEventListener("click", () => showWorkspace("random"));
+        $("randomRosterSelect").addEventListener("change", prepareRandomBoard);
+        $("prepareRandomBtn").addEventListener("click", prepareRandomBoard);
+        $("chooseStudentBtn").addEventListener("click", chooseRandomStudent);
+        $("skipRandomBtn").addEventListener("click", () => { randomAnimationSkip = true; });
+        $("restoreAllStudentsBtn").addEventListener("click", () => { const entry=selectedRandomRoster(); if(entry){randomRemovedSet(entry).clear();renderRandomHistory();prepareRandomBoard();} });
+        $("presentRandomBtn").addEventListener("click", async () => { if(!selectedRandomRoster()) return alert("Choose a saved roster first."); prepareRandomBoard(); document.body.classList.add("random-presentation"); try{await document.documentElement.requestFullscreen?.();}catch{} });
         $("groupRosterSelect").addEventListener("change", () => { renderPairRules(); prepareGroupBoard(); });
         $("groupSizeInput").addEventListener("change", prepareGroupBoard);
         $("generateGroupsBtn").addEventListener("click", prepareGroupBoard);
@@ -2148,7 +2310,7 @@
           try { await document.documentElement.requestFullscreen?.(); } catch {}
         });
         document.addEventListener("fullscreenchange", () => {
-          if (!document.fullscreenElement) document.body.classList.remove("presentation");
+          if (!document.fullscreenElement) { document.body.classList.remove("presentation"); document.body.classList.remove("random-presentation"); }
         });
         $("saveJsonBtn").addEventListener("click", saveJsonBackup);
         $("syncJsonBtn").addEventListener("click", syncJsonBackup);
@@ -2247,7 +2409,9 @@
         document.addEventListener("keydown", (e) => {
           if (e.key === "Escape") {
             animationSkipRequested = true;
+            randomAnimationSkip = true;
             document.body.classList.remove("presentation");
+            document.body.classList.remove("random-presentation");
             isPainting = false;
             state.selectedStudentId = null;
             state.swapFirstId = null;
