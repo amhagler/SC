@@ -143,6 +143,7 @@
     .library-row.roster-library { grid-template-columns: minmax(0, 1fr) repeat(4, auto); }
     .library-row + .library-row { margin-top: 8px; }
     .library-count { color: var(--muted); font-size: 11px; font-weight: 800; }
+    .library-delete { width:36px; min-width:36px; padding-inline:0; font-size:20px; line-height:1; }
 
     button, input, select, textarea {
       font: inherit;
@@ -664,7 +665,7 @@
               <select id="roomLibrarySelect"><option value="">Choose a saved room…</option></select>
             </label>
             <button id="loadRoomBtn" type="button">Load</button>
-            <button id="deleteRoomBtn" class="danger" type="button">Delete</button>
+            <button id="deleteRoomBtn" class="danger library-delete" type="button" title="Delete selected classroom" aria-label="Delete selected classroom">×</button>
             <button id="saveRoomBtn" class="primary" type="button">Save as…</button>
           </div>
           <div class="library-row roster-library">
@@ -672,8 +673,8 @@
               <select id="rosterLibrarySelect"><option value="">Choose a saved roster…</option></select>
             </label>
             <button id="loadRosterBtn" type="button">Load</button>
-            <button id="updateRosterBtn" type="button">Update selected</button>
-            <button id="deleteRosterBtn" class="danger" type="button">Delete</button>
+            <button id="updateRosterBtn" type="button">Update</button>
+            <button id="deleteRosterBtn" class="danger library-delete" type="button" title="Delete selected class roster" aria-label="Delete selected class roster">×</button>
             <button id="saveRosterBtn" class="primary" type="button">Save as…</button>
           </div>
           <div class="library-row">
@@ -681,7 +682,7 @@
               <select id="chartLibrarySelect"><option value="">Choose a saved arrangement…</option></select>
             </label>
             <button id="loadChartBtn" type="button">Load</button>
-            <button id="deleteChartBtn" class="danger" type="button">Delete</button>
+            <button id="deleteChartBtn" class="danger library-delete" type="button" title="Delete selected seating arrangement" aria-label="Delete selected seating arrangement">×</button>
             <button id="saveChartBtn" class="primary" type="button">Save as…</button>
           </div>
           <p class="hint">Rooms and rosters are reusable building blocks. A seating arrangement saves both together with the student-to-desk assignments for later adjustment.</p>
