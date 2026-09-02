@@ -139,8 +139,8 @@
     .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .grid-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .grid-row.three { grid-template-columns: 1fr 1fr 1fr; }
-    .library-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 7px; align-items: end; }
-    .library-row.roster-library { grid-template-columns: minmax(0, 1fr) auto auto auto; }
+    .library-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(3, auto); gap: 7px; align-items: end; }
+    .library-row.roster-library { grid-template-columns: minmax(0, 1fr) repeat(4, auto); }
     .library-row + .library-row { margin-top: 8px; }
     .library-count { color: var(--muted); font-size: 11px; font-weight: 800; }
 
@@ -428,6 +428,15 @@
     body.random-presentation .random-app { display:block; max-width:none; }
     body.random-presentation .random-stage { border:0; box-shadow:none; min-height:100vh; }
     body.random-presentation .random-stage .content { min-height:100vh; padding:35px 35px 110px; }
+    .chart-present-only { display:none; }
+    body.chart-presentation { padding:0; overflow:hidden; }
+    body.chart-presentation .top-tabs, body.chart-presentation .controls, body.chart-presentation .teacher-only, body.chart-presentation #presentChartBtn { display:none!important; }
+    body.chart-presentation #seatingApp { display:block!important; max-width:none; }
+    body.chart-presentation #chartPanel { min-height:100vh; border:0; border-radius:0; box-shadow:none; }
+    body.chart-presentation #chartPanel > .header { padding:12px 20px; }
+    body.chart-presentation .chart-present-only { display:inline-flex; }
+    body.chart-presentation .grid-wrap { min-height:calc(100vh - 76px); display:grid; place-items:center; padding:12px; }
+    body.chart-presentation .classroom { max-width:100%; }
 
     .sync-success { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.7); z-index:300; pointer-events:none; opacity:0; padding:20px 34px; border:2px solid var(--accent); border-radius:18px; background:color-mix(in srgb,var(--panel) 90%,transparent); color:var(--ink); font-size:clamp(24px,4vw,54px); font-weight:950; letter-spacing:.08em; text-align:center; box-shadow:0 0 42px var(--accent),inset 0 0 28px color-mix(in srgb,var(--accent) 22%,transparent); }
     body.sync-flash .sync-success { animation:syncMessage 2s ease-in-out both; }
@@ -655,6 +664,7 @@
               <select id="roomLibrarySelect"><option value="">Choose a saved room…</option></select>
             </label>
             <button id="loadRoomBtn" type="button">Load</button>
+            <button id="deleteRoomBtn" class="danger" type="button">Delete</button>
             <button id="saveRoomBtn" class="primary" type="button">Save as…</button>
           </div>
           <div class="library-row roster-library">
@@ -663,6 +673,7 @@
             </label>
             <button id="loadRosterBtn" type="button">Load</button>
             <button id="updateRosterBtn" type="button">Update selected</button>
+            <button id="deleteRosterBtn" class="danger" type="button">Delete</button>
             <button id="saveRosterBtn" class="primary" type="button">Save as…</button>
           </div>
           <div class="library-row">
@@ -670,6 +681,7 @@
               <select id="chartLibrarySelect"><option value="">Choose a saved arrangement…</option></select>
             </label>
             <button id="loadChartBtn" type="button">Load</button>
+            <button id="deleteChartBtn" class="danger" type="button">Delete</button>
             <button id="saveChartBtn" class="primary" type="button">Save as…</button>
           </div>
           <p class="hint">Rooms and rosters are reusable building blocks. A seating arrangement saves both together with the student-to-desk assignments for later adjustment.</p>
@@ -747,6 +759,25 @@
             <button id="clearSeatsBtn" type="button">Clear unlocked seats</button>
           </div>
           <p class="hint">Lock students you do not want moved. Tags such as front, back, window, and door guide the next shuffle.</p>
+          <details id="seatingSettingsDetails" style="margin-top:10px">
+            <summary>Settings</summary>
+            <div class="grid-row" style="margin-top:10px">
+              <label>Rule
+                <select id="seatingRuleType">
+                  <option value="apart">Don’t pair with or seat next to</option>
+                  <option value="together">Set these two next to each other</option>
+                  <option value="nearBoard">Seat near the board</option>
+                </select>
+              </label>
+              <label>Student <select id="seatingStudentA"></select></label>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <label id="seatingStudentBLabel" style="flex:1 1 180px">Second student <select id="seatingStudentB"></select></label>
+              <button id="addSeatingRuleBtn" class="primary" type="button">Add rule</button>
+            </div>
+            <div class="pair-list" id="seatingRuleList" style="margin-top:9px"></div>
+            <p class="hint">These rules are saved with rosters and seating arrangements. Settings are hidden in presentation mode.</p>
+          </details>
         </section>
 
         <section class="section">
@@ -795,8 +826,7 @@
           </div>
           <div class="row" style="margin-top:8px">
             <button id="printThemeBtn" type="button">Print theme: Off</button>
-            <button class="warning" id="exportPngBtn" type="button">Export PNG</button>
-            <button class="warning" id="exportCsvBtn" type="button">Export CSV</button>
+            <button class="warning" id="exportJpgBtn" type="button">Export JPG</button>
             <button id="printBtn" type="button">Print</button>
             <button class="danger" id="resetBtn" type="button">Reset all</button>
           </div>
@@ -811,6 +841,8 @@
           <p class="sub"><span id="teacherView">Teacher</span> <span id="dateView"></span></p>
         </div>
         <div class="stage-tools">
+          <button id="presentChartBtn" type="button">Present full screen</button>
+          <button id="presentationShuffleBtn" class="primary chart-present-only" type="button">Randomize seating</button>
           <div class="front">Front of class</div>
         </div>
       </div>
@@ -984,6 +1016,7 @@
         labels: new Map(),
         students: [],
         pairExclusions: [],
+        seatingRules: { apart: [], together: [], nearBoard: [] },
         placements: new Map(),
         previousPlacements: new Map(),
         selectedStudentId: null,
@@ -1018,6 +1051,11 @@
       };
       const uid = () => `s_${Math.random().toString(16).slice(2)}_${Date.now().toString(16)}`;
       const deepCopy = (value) => JSON.parse(JSON.stringify(value));
+      const normalizeSeatingRules = (rules) => ({
+        apart: Array.isArray(rules?.apart) ? rules.apart.map((pair) => [...pair]) : [],
+        together: Array.isArray(rules?.together) ? rules.together.map((pair) => [...pair]) : [],
+        nearBoard: Array.isArray(rules?.nearBoard) ? [...rules.nearBoard] : []
+      });
 
       function cloneState() {
         return {
@@ -1026,6 +1064,7 @@
           paths: new Set(state.paths),
           labels: new Map(state.labels),
           students: state.students.map((s) => ({ ...s })),
+          seatingRules: deepCopy(state.seatingRules),
           placements: new Map(state.placements),
           previousPlacements: new Map(state.previousPlacements)
         };
@@ -1043,6 +1082,7 @@
         state.labels = new Map(snapshot.labels);
         state.students = snapshot.students.map((s) => ({ ...s }));
         state.pairExclusions = (snapshot.pairExclusions || []).map((pair) => [...pair]);
+        state.seatingRules = normalizeSeatingRules(snapshot.seatingRules);
         state.placements = new Map(snapshot.placements);
         state.previousPlacements = new Map(snapshot.previousPlacements);
       }
@@ -1098,6 +1138,23 @@
         $("libraryStatus").textContent = `${library.rooms.length}/4 rooms · ${library.rosters.length}/7 rosters · ${library.charts.length}/12 arrangements`;
       }
 
+      function deleteSavedItem(kind) {
+        const config = {
+          room: [library.rooms, "roomLibrarySelect", "classroom layout"],
+          roster: [library.rosters, "rosterLibrarySelect", "class roster"],
+          chart: [library.charts, "chartLibrarySelect", "seating arrangement"]
+        }[kind];
+        const [items, selectId, label] = config;
+        const name = $(selectId).value;
+        const index = items.findIndex((item) => item.name === name);
+        if (index < 0) return alert(`Select the saved ${label} you want to delete.`);
+        if (!confirm(`Permanently delete the saved ${label} “${name}” from this browser?`)) return;
+        items.splice(index, 1);
+        saveLibrary();
+        renderLibrary();
+        announce(`${label[0].toUpperCase() + label.slice(1)} “${name}” deleted.`);
+      }
+
       function namedSave(kind) {
         const isRoom = kind === "room";
         const items = isRoom ? library.rooms : library.rosters;
@@ -1124,7 +1181,8 @@
         } : {
           ...existingRosterData,
           students: state.students.map((student) => ({ ...student })),
-          pairExclusions: (state.pairExclusions || existingRosterData.pairExclusions || []).map((pair) => [...pair])
+          pairExclusions: (state.pairExclusions || existingRosterData.pairExclusions || []).map((pair) => [...pair]),
+          seatingRules: deepCopy(state.seatingRules)
         };
         const entry = { name, updatedAt: new Date().toISOString(), data };
         if (existing >= 0) {
@@ -1148,6 +1206,7 @@
         const data = deepCopy(library.rosters[index].data || {});
         data.students = state.students.map((student) => ({...student}));
         data.pairExclusions = (state.pairExclusions || []).map((pair) => [...pair]);
+        data.seatingRules = deepCopy(state.seatingRules);
         library.rosters[index] = deepCopy({ name, updatedAt: new Date().toISOString(), data });
         saveLibrary(); renderLibrary(); $("rosterLibrarySelect").value = name;
         announce(`Roster “${name}” updated.`);
@@ -1163,6 +1222,7 @@
         const data = {
           rows: state.rows, cols: state.cols, desks: [...state.desks], paths: [...state.paths], labels: [...state.labels],
           students: state.students.map((student) => ({...student})), pairExclusions: (state.pairExclusions || []).map((pair) => [...pair]),
+          seatingRules: deepCopy(state.seatingRules),
           placements: [...state.placements], previousPlacements: [...state.previousPlacements], chartTitle: state.chartTitle,
           teacher: state.teacher, date: state.date, avoidPrevious: state.avoidPrevious
         };
@@ -1181,6 +1241,7 @@
         state.rows = data.rows; state.cols = data.cols;
         state.desks = new Set(data.desks || []); state.paths = new Set(data.paths || []); state.labels = new Map(data.labels || []);
         state.students = (data.students || []).map((student) => ({...student})); state.pairExclusions = (data.pairExclusions || []).map((pair) => [...pair]);
+        state.seatingRules = normalizeSeatingRules(data.seatingRules);
         state.placements = new Map(data.placements || []); state.previousPlacements = new Map(data.previousPlacements || []);
         state.chartTitle = data.chartTitle || entry.name; state.teacher = data.teacher || ""; state.date = data.date || new Date().toISOString().slice(0,10);
         state.avoidPrevious = data.avoidPrevious ?? true; state.selectedStudentId = null; state.swapFirstId = null; state.step = "seat";
@@ -1202,6 +1263,7 @@
         } else {
           state.students = (entry.data.students || []).map((student) => ({ ...student }));
           state.pairExclusions = (entry.data.pairExclusions || []).map((pair) => [...pair]);
+          state.seatingRules = normalizeSeatingRules(entry.data.seatingRules);
           state.teacher = entry.name;
         }
         state.placements.clear();
@@ -1227,6 +1289,7 @@
           state.previousPlacements = new Map(p.previousPlacements || []);
           state.students = Array.isArray(p.students) ? p.students : [];
           state.pairExclusions = Array.isArray(p.pairExclusions) ? p.pairExclusions : [];
+          state.seatingRules = normalizeSeatingRules(p.seatingRules);
           state.skin = p.skin || "brass";
           state.uniform = p.uniform || (p.dark ? "dark" : "silver");
         } catch {
@@ -1451,6 +1514,10 @@
 
       function smartSeat(fillEmptyOnly) {
         pushHistory();
+        const rules = state.seatingRules || { apart: [], together: [], nearBoard: [] };
+        const nearBoard = new Set(rules.nearBoard || []);
+        const apartPartners = (id) => (rules.apart || []).filter((pair) => pair.includes(id)).map((pair) => pair[0] === id ? pair[1] : pair[0]);
+        const togetherPartners = (id) => (rules.together || []).filter((pair) => pair.includes(id)).map((pair) => pair[0] === id ? pair[1] : pair[0]);
         const lockedIds = new Set(state.students.filter((s) => s.locked).map((s) => s.id));
         const occupiedByLocked = new Set([...state.placements].filter(([, id]) => lockedIds.has(id)).map(([desk]) => desk));
         if (!fillEmptyOnly) {
@@ -1462,9 +1529,43 @@
           const seated = getSeatedIds();
           pool = pool.filter((s) => !seated.has(s.id));
         }
+        const baseScore = (student, desk) => {
+          let score = zoneScore(student, desk);
+          const previous = getSeatOf(student.id, state.previousPlacements);
+          if (state.avoidPrevious && previous === desk) score += 20;
+          if (nearBoard.has(student.id)) score += parseKey(desk).r * 30;
+          const seatedValues = [...state.placements.entries()];
+          if (apartPartners(student.id).some((id) => seatedValues.some(([otherDesk, otherId]) => otherId === id && adjacent(desk, otherDesk)))) score += 10000;
+          const seatedTogether = togetherPartners(student.id).map((id) => getSeatOf(id)).filter(Boolean);
+          if (seatedTogether.length && !seatedTogether.some((otherDesk) => adjacent(desk, otherDesk))) score += 5000;
+          return score;
+        };
+
+        // Place explicit pairs first so a later single assignment cannot consume every neighboring desk.
+        for (const pair of shuffle((rules.together || []).slice())) {
+          const first = pool.find((student) => student.id === pair[0]);
+          const second = pool.find((student) => student.id === pair[1]);
+          if (!first || !second || desks.length < 2) continue;
+          const candidates = [];
+          for (let i = 0; i < desks.length; i++) {
+            for (let j = i + 1; j < desks.length; j++) {
+              if (!adjacent(desks[i], desks[j])) continue;
+              const direct = baseScore(first, desks[i]) + baseScore(second, desks[j]);
+              const reverse = baseScore(first, desks[j]) + baseScore(second, desks[i]);
+              candidates.push(reverse < direct ? { a: desks[j], b: desks[i], score: reverse } : { a: desks[i], b: desks[j], score: direct });
+            }
+          }
+          candidates.sort((a, b) => a.score - b.score);
+          const chosen = candidates[0];
+          if (!chosen) continue;
+          state.placements.set(chosen.a, first.id);
+          state.placements.set(chosen.b, second.id);
+          desks = desks.filter((desk) => desk !== chosen.a && desk !== chosen.b);
+          pool = pool.filter((student) => student.id !== first.id && student.id !== second.id);
+        }
         pool = shuffle(pool).sort((a, b) => {
-          const aNeed = a.zone && a.zone !== "any" ? -1 : 0;
-          const bNeed = b.zone && b.zone !== "any" ? -1 : 0;
+          const aNeed = nearBoard.has(a.id) || (a.zone && a.zone !== "any") || togetherPartners(a.id).length ? -1 : 0;
+          const bNeed = nearBoard.has(b.id) || (b.zone && b.zone !== "any") || togetherPartners(b.id).length ? -1 : 0;
           return aNeed - bNeed;
         });
         for (const student of pool) {
@@ -1482,6 +1583,8 @@
           const ranked = desks.slice().sort((a, b) => {
             let sa = zoneScore(student, a);
             let sb = zoneScore(student, b);
+            sa = baseScore(student, a);
+            sb = baseScore(student, b);
             if (state.avoidPrevious && previous) {
               if (a === previous) sa += 20;
               if (b === previous) sb += 20;
@@ -1723,6 +1826,45 @@
         } else {
           announce("");
         }
+      }
+
+      function renderSeatingRules() {
+        const students = state.students || [];
+        const byId = new Map(students.map((student) => [student.id, student]));
+        ["seatingStudentA", "seatingStudentB"].forEach((id) => {
+          const select = $(id);
+          const old = select.value;
+          select.innerHTML = "";
+          students.forEach((student) => {
+            const option = document.createElement("option");
+            option.value = student.id;
+            option.textContent = student.name;
+            select.appendChild(option);
+          });
+          if (byId.has(old)) select.value = old;
+        });
+        const list = $("seatingRuleList");
+        list.innerHTML = "";
+        const rules = state.seatingRules || { apart: [], together: [], nearBoard: [] };
+        const persistRules = () => {
+          const entry = library.rosters.find((item) => item.name === $("rosterLibrarySelect").value);
+          if (!entry) return;
+          const rosterIds = new Set((entry.data.students || []).map((student) => student.id));
+          if (!state.students.every((student) => rosterIds.has(student.id))) return;
+          entry.data.seatingRules = deepCopy(state.seatingRules);
+          entry.data.pairExclusions = (state.pairExclusions || []).map((pair) => [...pair]);
+          entry.updatedAt = new Date().toISOString();
+          saveLibrary();
+        };
+        const removePair = (type, pair) => {
+          rules[type] = rules[type].filter((value) => value !== pair);
+          if (type === "apart") state.pairExclusions = state.pairExclusions.filter((value) => !(value.includes(pair[0]) && value.includes(pair[1])));
+          persistRules(); render(); save();
+        };
+        rules.apart.forEach((pair) => byId.has(pair[0]) && byId.has(pair[1]) && appendRemovableRule("seatingRuleList", `Don’t pair or sit together: ${byId.get(pair[0]).name} + ${byId.get(pair[1]).name}`, () => removePair("apart", pair)));
+        rules.together.forEach((pair) => byId.has(pair[0]) && byId.has(pair[1]) && appendRemovableRule("seatingRuleList", `Seat together: ${byId.get(pair[0]).name} + ${byId.get(pair[1]).name}`, () => removePair("together", pair)));
+        rules.nearBoard.forEach((id) => byId.has(id) && appendRemovableRule("seatingRuleList", `Near board: ${byId.get(id).name}`, () => { rules.nearBoard = rules.nearBoard.filter((value) => value !== id); persistRules(); render(); save(); }));
+        if (!list.children.length) list.innerHTML = '<p class="hint">No seating rules added.</p>';
       }
 
       function selectedGroupRoster() {
@@ -2219,13 +2361,14 @@
         $("teacherView").textContent = state.teacher || "Teacher";
         $("dateView").textContent = state.date ? `- ${state.date}` : "";
         const noteCount = state.students.filter((s) => s.notes).length;
-        $("teacherNotesView").textContent = noteCount ? `${noteCount} student note(s) included in the roster and CSV export.` : "";
+        $("teacherNotesView").textContent = noteCount ? `${noteCount} student note(s) included in the saved roster.` : "";
       }
 
       function render() {
         updateCss();
         renderChrome();
         renderLibrary();
+        renderSeatingRules();
         renderGrid();
         renderRoster();
         renderStats();
@@ -2278,40 +2421,27 @@
         save();
       }
 
-      function exportCSV() {
-        const byId = new Map(state.students.map((s) => [s.id, s]));
-        const lines = ["row,col,label,student,zone,tag,locked,notes,previous_row,previous_col"];
-        const q = (value) => `"${String(value || "").replace(/"/g, '""')}"`;
-        [...state.desks].map(parseKey).sort((a, b) => a.r - b.r || a.c - b.c).forEach(({ r, c }) => {
-          const desk = keyOf(r, c);
-          const student = byId.get(state.placements.get(desk));
-          const previousSeat = student ? getSeatOf(student.id, state.previousPlacements) : "";
-          const prev = previousSeat ? parseKey(previousSeat) : null;
-          lines.push([
-            r + 1, c + 1, q(state.labels.get(desk)), q(student?.name),
-            q(student?.zone), q(student?.behavior), student?.locked ? "yes" : "no",
-            q(student?.notes), prev ? prev.r + 1 : "", prev ? prev.c + 1 : ""
-          ].join(","));
-        });
-        const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "seating-assignments.csv";
-        a.click();
-        URL.revokeObjectURL(url);
-      }
-
-      async function exportPNG() {
+      async function exportJPG() {
         const panel = $("chartPanel");
-        if (window.html2canvas) {
-          const canvas = await html2canvas(panel, { scale: 2, backgroundColor: getComputedStyle(document.body).getPropertyValue("--bg") });
+        if (!window.html2canvas) return alert("JPG export needs the image-export library to load. Check your connection and try again, or use Print.");
+        const button = $("exportJpgBtn");
+        button.disabled = true;
+        button.textContent = "Creating JPG…";
+        try {
+          const background = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#ffffff";
+          const canvas = await html2canvas(panel, { scale: 2, backgroundColor: background, useCORS: true, logging: false });
           const a = document.createElement("a");
-          a.href = canvas.toDataURL("image/png");
-          a.download = "seating-chart.png";
+          a.href = canvas.toDataURL("image/jpeg", .94);
+          const safeTitle = (state.chartTitle || "seating-chart").replace(/[\\/:*?"<>|]+/g, "-").trim();
+          a.download = `${safeTitle || "seating-chart"}.jpg`;
           a.click();
-        } else {
-          alert("PNG export needs html2canvas to load. Use Print for now, or reconnect and try again.");
+          announce("JPG seating chart exported.");
+        } catch (error) {
+          console.error(error);
+          alert("The JPG could not be created. Try Print instead, or reload while connected so the image-export library can load.");
+        } finally {
+          button.disabled = false;
+          button.textContent = "Export JPG";
         }
       }
 
@@ -2380,7 +2510,7 @@
           try { await document.documentElement.requestFullscreen?.(); } catch {}
         });
         document.addEventListener("fullscreenchange", () => {
-          if (!document.fullscreenElement) { document.body.classList.remove("presentation"); document.body.classList.remove("random-presentation"); }
+          if (!document.fullscreenElement) { document.body.classList.remove("presentation"); document.body.classList.remove("random-presentation"); document.body.classList.remove("chart-presentation"); }
         });
         $("saveJsonBtn").addEventListener("click", saveJsonBackup);
         $("syncJsonBtn").addEventListener("click", syncJsonBackup);
@@ -2391,11 +2521,14 @@
         $("stepSeat").addEventListener("click", () => setStep("seat"));
         $("saveRoomBtn").addEventListener("click", () => namedSave("room"));
         $("loadRoomBtn").addEventListener("click", () => loadNamed("room"));
+        $("deleteRoomBtn").addEventListener("click", () => deleteSavedItem("room"));
         $("saveRosterBtn").addEventListener("click", () => namedSave("roster"));
         $("loadRosterBtn").addEventListener("click", () => loadNamed("roster"));
         $("updateRosterBtn").addEventListener("click", updateSelectedRoster);
+        $("deleteRosterBtn").addEventListener("click", () => deleteSavedItem("roster"));
         $("saveChartBtn").addEventListener("click", saveSeatingArrangement);
         $("loadChartBtn").addEventListener("click", loadSeatingArrangement);
+        $("deleteChartBtn").addEventListener("click", () => deleteSavedItem("chart"));
         $("undoBtn").addEventListener("click", () => {
           const previous = history.pop();
           if (!previous) return;
@@ -2422,6 +2555,45 @@
         $("filterSelect").addEventListener("change", renderRoster);
         $("fillEmptyBtn").addEventListener("click", () => smartSeat(true));
         $("reshuffleBtn").addEventListener("click", () => smartSeat(false));
+        $("presentationShuffleBtn").addEventListener("click", () => smartSeat(false));
+        $("presentChartBtn").addEventListener("click", async () => {
+          document.body.classList.add("chart-presentation");
+          try { await document.documentElement.requestFullscreen?.(); } catch {}
+        });
+        const updateSeatingRuleForm = () => {
+          const single = $("seatingRuleType").value === "nearBoard";
+          $("seatingStudentBLabel").hidden = single;
+        };
+        $("seatingRuleType").addEventListener("change", updateSeatingRuleForm);
+        updateSeatingRuleForm();
+        $("addSeatingRuleBtn").addEventListener("click", () => {
+          const type = $("seatingRuleType").value;
+          const a = $("seatingStudentA").value;
+          const b = $("seatingStudentB").value;
+          if (!a) return alert("Choose a student for this rule.");
+          state.seatingRules ||= { apart: [], together: [], nearBoard: [] };
+          if (type === "nearBoard") {
+            if (!state.seatingRules.nearBoard.includes(a)) state.seatingRules.nearBoard.push(a);
+          } else {
+            if (!b || a === b) return alert("Choose two different students.");
+            const opposite = type === "apart" ? "together" : "apart";
+            if (state.seatingRules[opposite].some((pair) => pair.includes(a) && pair.includes(b))) return alert("That conflicts with an existing seating rule.");
+            if (!state.seatingRules[type].some((pair) => pair.includes(a) && pair.includes(b))) state.seatingRules[type].push([a, b]);
+            if (type === "apart" && !state.pairExclusions.some((pair) => pair.includes(a) && pair.includes(b))) state.pairExclusions.push([a, b]);
+          }
+          const selectedRoster = library.rosters.find((item) => item.name === $("rosterLibrarySelect").value);
+          if (selectedRoster) {
+            const rosterIds = new Set((selectedRoster.data.students || []).map((student) => student.id));
+            if (state.students.every((student) => rosterIds.has(student.id))) {
+              selectedRoster.data.seatingRules = deepCopy(state.seatingRules);
+              selectedRoster.data.pairExclusions = state.pairExclusions.map((pair) => [...pair]);
+              selectedRoster.updatedAt = new Date().toISOString();
+              saveLibrary();
+            }
+          }
+          render(); save();
+          announce("Private seating rule added.");
+        });
         $("swapModeBtn").addEventListener("click", () => {
           state.swapMode = !state.swapMode;
           state.swapFirstId = null;
@@ -2446,8 +2618,7 @@
         $("skinSelect").addEventListener("change", (e) => { state.skin = e.target.value; render(); save(); });
         $("uniformSelect").addEventListener("change", (e) => { state.uniform = e.target.value; state.dark = state.uniform === "dark"; render(); save(); });
         $("printThemeBtn").addEventListener("click", () => { state.printTheme = !state.printTheme; render(); save(); });
-        $("exportPngBtn").addEventListener("click", exportPNG);
-        $("exportCsvBtn").addEventListener("click", exportCSV);
+        $("exportJpgBtn").addEventListener("click", exportJPG);
         $("printBtn").addEventListener("click", () => window.print());
         $("resetBtn").addEventListener("click", () => {
           if (!confirm("Reset the active room, roster, and seating? Your saved rooms and rosters will be kept.")) return;
@@ -2455,7 +2626,7 @@
           const preservedSkin = state.skin;
           const preservedUniform = state.uniform;
           Object.assign(state, {
-            step: "build", tool: "desk", rows: 8, cols: 10, students: [], pairExclusions: [],
+            step: "build", tool: "desk", rows: 8, cols: 10, students: [], pairExclusions: [], seatingRules: { apart: [], together: [], nearBoard: [] },
             selectedStudentId: null, swapMode: false, swapFirstId: null, printTheme: false,
             dark: preservedUniform === "dark", skin: preservedSkin, uniform: preservedUniform,
             version: "teacher", chartTitle: "Classroom Seating Chart", teacher: "",
@@ -2482,6 +2653,7 @@
             randomAnimationSkip = true;
             document.body.classList.remove("presentation");
             document.body.classList.remove("random-presentation");
+            document.body.classList.remove("chart-presentation");
             isPainting = false;
             state.selectedStudentId = null;
             state.swapFirstId = null;
