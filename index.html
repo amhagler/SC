@@ -4,7 +4,6 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Seating Chart Generator</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <style>
     :root {
       --bg: #020815; --bg2: #071e38;
@@ -437,6 +436,8 @@
     body.chart-presentation #chartPanel > .header { padding:12px 20px; }
     body.chart-presentation .chart-present-only { display:inline-flex; }
     body.chart-presentation .grid-wrap { min-height:calc(100vh - 76px); display:grid; place-items:center; padding:12px; }
+    body.chart-presentation.attendance-mode .grid-wrap { min-height:calc(100vh - 160px); }
+    body.chart-presentation .attendance-panel { margin:0 16px 12px; }
     body.chart-presentation .classroom { max-width:100%; }
 
     .sync-success { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%) scale(.7); z-index:300; pointer-events:none; opacity:0; padding:20px 34px; border:2px solid var(--accent); border-radius:18px; background:color-mix(in srgb,var(--panel) 90%,transparent); color:var(--ink); font-size:clamp(24px,4vw,54px); font-weight:950; letter-spacing:.08em; text-align:center; box-shadow:0 0 42px var(--accent),inset 0 0 28px color-mix(in srgb,var(--accent) 22%,transparent); }
@@ -583,6 +584,16 @@
       outline: 3px solid var(--gold);
       outline-offset: 2px;
     }
+
+    body.attendance-mode .token { cursor:pointer; }
+    .cell.attendance-absent { border-color:var(--danger); box-shadow:0 0 16px color-mix(in srgb,var(--danger) 58%,transparent),inset 0 0 18px color-mix(in srgb,var(--danger) 18%,transparent); }
+    .cell.attendance-absent .token { background:linear-gradient(135deg,color-mix(in srgb,var(--danger) 78%,white),var(--danger)); color:#240505; text-decoration:line-through; }
+    .attendance-panel { display:none; margin:12px 16px 16px; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel-soft); }
+    body.attendance-mode .attendance-panel { display:block; }
+    .attendance-head { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
+    .attendance-head strong { margin-right:auto; }
+    .attendance-list { display:flex; flex-wrap:wrap; gap:7px; min-height:28px; }
+    .attendance-name { border:1px solid color-mix(in srgb,var(--danger) 60%,var(--line)); border-radius:999px; padding:6px 10px; background:color-mix(in srgb,var(--danger) 13%,var(--panel)); color:var(--ink); font-weight:850; }
 
     .path .token, .cell:not(.desk) .token { display: none; }
 
@@ -787,7 +798,7 @@
         </section>
 
         <section class="section">
-          <div class="section-title">Look And Export</div>
+          <div class="section-title">Look And Print</div>
           <div class="grid-row">
             <label>Legibility <input id="legibilityInput" type="range" min="0" max="100" value="50" /></label>
             <label>Version
@@ -827,7 +838,6 @@
           </div>
           <div class="row" style="margin-top:8px">
             <button id="printThemeBtn" type="button">Print theme: Off</button>
-            <button class="warning" id="exportJpgBtn" type="button">Export JPG</button>
             <button id="printBtn" type="button">Print</button>
             <button class="danger" id="resetBtn" type="button">Reset all</button>
           </div>
@@ -842,6 +852,7 @@
           <p class="sub"><span id="teacherView">Teacher</span> <span id="dateView"></span></p>
         </div>
         <div class="stage-tools">
+          <button id="attendanceModeBtn" type="button">Attendance</button>
           <button id="presentChartBtn" type="button">Present full screen</button>
           <button id="presentationShuffleBtn" class="primary chart-present-only" type="button">Randomize seating</button>
           <div class="front">Front of class</div>
@@ -857,6 +868,10 @@
           <div class="grid" id="grid" aria-label="Seating grid"></div>
           <p class="hint teacher-only" id="teacherNotesView"></p>
         </div>
+      </div>
+      <div class="attendance-panel" id="attendancePanel">
+        <div class="attendance-head"><strong id="attendanceCount">Absent · 0</strong><button id="copyAttendanceBtn" type="button">Copy list</button><button id="clearAttendanceBtn" type="button">Clear</button></div>
+        <div class="attendance-list" id="attendanceList"><span class="hint">Click a student’s seat to mark them absent.</span></div>
       </div>
     </section>
   </main>
@@ -1038,6 +1053,8 @@
       };
       const history = [];
       let isPainting = false;
+      let attendanceMode = false;
+      const attendanceAbsentIds = new Set();
       const $ = (id) => document.getElementById(id);
       const els = {
         grid: $("grid"),
@@ -1238,6 +1255,7 @@
         const entry = library.charts.find((item) => item.name === $("chartLibrarySelect").value);
         if (!entry) return;
         pushHistory();
+        attendanceMode = false; attendanceAbsentIds.clear();
         const data = entry.data;
         state.rows = data.rows; state.cols = data.cols;
         state.desks = new Set(data.desks || []); state.paths = new Set(data.paths || []); state.labels = new Map(data.labels || []);
@@ -1255,6 +1273,7 @@
         const entry = (isRoom ? library.rooms : library.rosters).find((item) => item.name === select.value);
         if (!entry) return;
         pushHistory();
+        attendanceMode = false; attendanceAbsentIds.clear();
         if (isRoom) {
           state.rows = entry.data.rows;
           state.cols = entry.data.cols;
@@ -1646,16 +1665,23 @@
               cell.appendChild(lab);
             }
             const studentId = state.placements.get(key);
+            if (studentId && attendanceAbsentIds.has(studentId)) cell.classList.add("attendance-absent");
             if (studentId) {
               const student = getStudent(studentId);
               if (student) {
                 const token = document.createElement("div");
                 token.className = `token${student.locked ? " locked" : ""}${state.selectedStudentId === student.id || state.swapFirstId === student.id ? " selected" : ""}`;
-                token.draggable = !student.locked;
+                token.draggable = !attendanceMode && !student.locked;
                 token.textContent = compactName(student.name);
                 token.title = `${student.name}${student.notes ? ` - ${student.notes}` : ""}`;
                 token.addEventListener("click", (event) => {
                   event.stopPropagation();
+                  if (attendanceMode) {
+                    if (attendanceAbsentIds.has(student.id)) attendanceAbsentIds.delete(student.id);
+                    else attendanceAbsentIds.add(student.id);
+                    render();
+                    return;
+                  }
                   if (state.swapMode) {
                     if (!state.swapFirstId) state.swapFirstId = student.id;
                     else swapStudents(state.swapFirstId, student.id);
@@ -1688,6 +1714,7 @@
             });
             cell.addEventListener("mouseup", () => { isPainting = false; });
             cell.addEventListener("dblclick", () => {
+              if (attendanceMode) return;
               if (!state.desks.has(key)) return;
               pushHistory();
               const next = prompt("Desk label (blank clears it):", state.labels.get(key) || "");
@@ -2365,6 +2392,31 @@
         $("teacherNotesView").textContent = noteCount ? `${noteCount} student note(s) included in the saved roster.` : "";
       }
 
+      function renderAttendance() {
+        document.body.classList.toggle("attendance-mode", attendanceMode);
+        $("attendanceModeBtn").classList.toggle("active", attendanceMode);
+        $("attendanceModeBtn").textContent = attendanceMode ? "Attendance: On" : "Attendance";
+        const validIds = new Set(state.students.map((student) => student.id));
+        for (const id of [...attendanceAbsentIds]) if (!validIds.has(id)) attendanceAbsentIds.delete(id);
+        const absent = state.students.filter((student) => attendanceAbsentIds.has(student.id)).sort((a, b) => a.name.localeCompare(b.name));
+        $("attendanceCount").textContent = `Absent · ${absent.length}`;
+        const list = $("attendanceList");
+        list.innerHTML = "";
+        if (!absent.length) {
+          const hint = document.createElement("span");
+          hint.className = "hint";
+          hint.textContent = "Click a student’s seat to mark them absent.";
+          list.appendChild(hint);
+          return;
+        }
+        absent.forEach((student) => {
+          const pill = document.createElement("span");
+          pill.className = "attendance-name";
+          pill.textContent = student.name;
+          list.appendChild(pill);
+        });
+      }
+
       function render() {
         updateCss();
         renderChrome();
@@ -2373,6 +2425,7 @@
         renderGrid();
         renderRoster();
         renderStats();
+        renderAttendance();
       }
 
       function applyPaste() {
@@ -2420,30 +2473,6 @@
         $("addNameInput").value = "";
         render();
         save();
-      }
-
-      async function exportJPG() {
-        const panel = $("chartPanel");
-        if (!window.html2canvas) return alert("JPG export needs the image-export library to load. Check your connection and try again, or use Print.");
-        const button = $("exportJpgBtn");
-        button.disabled = true;
-        button.textContent = "Creating JPG…";
-        try {
-          const background = getComputedStyle(document.body).getPropertyValue("--bg").trim() || "#ffffff";
-          const canvas = await html2canvas(panel, { scale: 2, backgroundColor: background, useCORS: true, logging: false });
-          const a = document.createElement("a");
-          a.href = canvas.toDataURL("image/jpeg", .94);
-          const safeTitle = (state.chartTitle || "seating-chart").replace(/[\\/:*?"<>|]+/g, "-").trim();
-          a.download = `${safeTitle || "seating-chart"}.jpg`;
-          a.click();
-          announce("JPG seating chart exported.");
-        } catch (error) {
-          console.error(error);
-          alert("The JPG could not be created. Try Print instead, or reload while connected so the image-export library can load.");
-        } finally {
-          button.disabled = false;
-          button.textContent = "Export JPG";
-        }
       }
 
       function wire() {
@@ -2557,6 +2586,24 @@
         $("fillEmptyBtn").addEventListener("click", () => smartSeat(true));
         $("reshuffleBtn").addEventListener("click", () => smartSeat(false));
         $("presentationShuffleBtn").addEventListener("click", () => smartSeat(false));
+        $("attendanceModeBtn").addEventListener("click", () => {
+          attendanceMode = !attendanceMode;
+          state.selectedStudentId = null;
+          state.swapFirstId = null;
+          render();
+        });
+        $("clearAttendanceBtn").addEventListener("click", () => { attendanceAbsentIds.clear(); render(); });
+        $("copyAttendanceBtn").addEventListener("click", async () => {
+          const names = state.students.filter((student) => attendanceAbsentIds.has(student.id)).map((student) => student.name).sort((a, b) => a.localeCompare(b));
+          if (!names.length) return alert("No students are currently marked absent.");
+          const text = names.join("\n");
+          try {
+            await navigator.clipboard.writeText(text);
+            announce(`${names.length} absent name${names.length === 1 ? "" : "s"} copied.`);
+          } catch {
+            prompt("Copy the absent list:", text);
+          }
+        });
         $("presentChartBtn").addEventListener("click", async () => {
           document.body.classList.add("chart-presentation");
           try { await document.documentElement.requestFullscreen?.(); } catch {}
@@ -2619,7 +2666,6 @@
         $("skinSelect").addEventListener("change", (e) => { state.skin = e.target.value; render(); save(); });
         $("uniformSelect").addEventListener("change", (e) => { state.uniform = e.target.value; state.dark = state.uniform === "dark"; render(); save(); });
         $("printThemeBtn").addEventListener("click", () => { state.printTheme = !state.printTheme; render(); save(); });
-        $("exportJpgBtn").addEventListener("click", exportJPG);
         $("printBtn").addEventListener("click", () => window.print());
         $("resetBtn").addEventListener("click", () => {
           if (!confirm("Reset the active room, roster, and seating? Your saved rooms and rosters will be kept.")) return;
@@ -2636,6 +2682,7 @@
           });
           state.desks = new Set(); state.paths = new Set(); state.labels = new Map();
           state.placements = new Map(); state.previousPlacements = new Map();
+          attendanceMode = false; attendanceAbsentIds.clear();
           render(); save();
           announce("Active chart reset. Appearance and saved library were kept.");
         });
