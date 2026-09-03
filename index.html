@@ -468,6 +468,9 @@
       text-transform: uppercase;
       white-space: nowrap;
     }
+    .front-marker { width:min(72%,720px); margin:0 auto 12px; border:1px solid var(--accent); border-radius:999px; padding:7px 14px; color:var(--ink); background:color-mix(in srgb,var(--accent) 12%,var(--panel)); box-shadow:0 0 18px color-mix(in srgb,var(--accent) 20%,transparent); text-align:center; font-size:11px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; }
+    .front-marker.bottom { margin:12px auto 0; }
+    body[data-front="top"] .front-marker.bottom, body[data-front="bottom"] .front-marker.top { display:none; }
 
     .chart-meta {
       display: grid;
@@ -855,7 +858,7 @@
           <button id="attendanceModeBtn" type="button">Attendance</button>
           <button id="presentChartBtn" type="button">Present full screen</button>
           <button id="presentationShuffleBtn" class="primary chart-present-only" type="button">Randomize seating</button>
-          <div class="front">Front of class</div>
+          <button id="flipRoomBtn" type="button">Front: Top</button>
         </div>
       </div>
       <div class="grid-wrap">
@@ -865,7 +868,9 @@
           <input id="dateInput" type="date" />
         </div>
         <div class="classroom">
+          <div class="front-marker top">Front of class</div>
           <div class="grid" id="grid" aria-label="Seating grid"></div>
+          <div class="front-marker bottom">Front of class</div>
           <p class="hint teacher-only" id="teacherNotesView"></p>
         </div>
       </div>
@@ -1027,6 +1032,7 @@
         tool: "desk",
         rows: 8,
         cols: 10,
+        frontPosition: "top",
         desks: new Set(),
         paths: new Set(),
         labels: new Map(),
@@ -1194,7 +1200,7 @@
         const sharedIds = selectedSource ? (selectedSource.data.students || []).filter((student) => currentIds.has(student.id)).length : 0;
         const existingRosterData = selectedSource && sharedIds > state.students.length / 2 ? deepCopy(selectedSource.data) : {};
         const data = isRoom ? {
-          rows: state.rows, cols: state.cols, desks: [...state.desks],
+          rows: state.rows, cols: state.cols, frontPosition: state.frontPosition, desks: [...state.desks],
           paths: [...state.paths], labels: [...state.labels]
         } : {
           ...existingRosterData,
@@ -1238,7 +1244,7 @@
         if (existing < 0 && library.charts.length >= 12) return alert("You can save up to 12 seating arrangements. Use an existing name to replace one.");
         if (existing >= 0 && !confirm(`Replace the saved seating arrangement “${library.charts[existing].name}”?`)) return;
         const data = {
-          rows: state.rows, cols: state.cols, desks: [...state.desks], paths: [...state.paths], labels: [...state.labels],
+          rows: state.rows, cols: state.cols, frontPosition: state.frontPosition, desks: [...state.desks], paths: [...state.paths], labels: [...state.labels],
           students: state.students.map((student) => ({...student})), pairExclusions: (state.pairExclusions || []).map((pair) => [...pair]),
           seatingRules: deepCopy(state.seatingRules),
           placements: [...state.placements], previousPlacements: [...state.previousPlacements], chartTitle: state.chartTitle,
@@ -1258,6 +1264,7 @@
         attendanceMode = false; attendanceAbsentIds.clear();
         const data = entry.data;
         state.rows = data.rows; state.cols = data.cols;
+        state.frontPosition = data.frontPosition === "bottom" ? "bottom" : "top";
         state.desks = new Set(data.desks || []); state.paths = new Set(data.paths || []); state.labels = new Map(data.labels || []);
         state.students = (data.students || []).map((student) => ({...student})); state.pairExclusions = (data.pairExclusions || []).map((pair) => [...pair]);
         state.seatingRules = normalizeSeatingRules(data.seatingRules);
@@ -1277,6 +1284,7 @@
         if (isRoom) {
           state.rows = entry.data.rows;
           state.cols = entry.data.cols;
+          state.frontPosition = entry.data.frontPosition === "bottom" ? "bottom" : "top";
           state.desks = new Set(entry.data.desks || []);
           state.paths = new Set(entry.data.paths || []);
           state.labels = new Map(entry.data.labels || []);
@@ -1312,6 +1320,7 @@
           state.seatingRules = normalizeSeatingRules(p.seatingRules);
           state.skin = p.skin || "brass";
           state.uniform = p.uniform || (p.dark ? "dark" : "silver");
+          state.frontPosition = p.frontPosition === "bottom" ? "bottom" : "top";
         } catch {
           localStorage.removeItem(STORAGE_KEY);
         }
@@ -1648,8 +1657,10 @@
           render();
           save();
         };
-        for (let r = 0; r < state.rows; r++) {
-          for (let c = 0; c < state.cols; c++) {
+        for (let displayRow = 0; displayRow < state.rows; displayRow++) {
+          const r = state.frontPosition === "bottom" ? state.rows - 1 - displayRow : displayRow;
+          for (let displayCol = 0; displayCol < state.cols; displayCol++) {
+            const c = state.frontPosition === "bottom" ? state.cols - 1 - displayCol : displayCol;
             const key = keyOf(r, c);
             const cell = document.createElement("div");
             cell.className = "cell";
@@ -2385,6 +2396,8 @@
         $("chartTitleInput").value = state.chartTitle;
         $("teacherInput").value = state.teacher;
         $("dateInput").value = state.date;
+        document.body.dataset.front = state.frontPosition === "bottom" ? "bottom" : "top";
+        $("flipRoomBtn").textContent = state.frontPosition === "bottom" ? "Front: Bottom" : "Front: Top";
         $("chartTitleView").textContent = state.chartTitle || "Classroom Seating Chart";
         $("teacherView").textContent = state.teacher || "Teacher";
         $("dateView").textContent = state.date ? `- ${state.date}` : "";
@@ -2592,6 +2605,13 @@
           state.swapFirstId = null;
           render();
         });
+        $("flipRoomBtn").addEventListener("click", () => {
+          pushHistory();
+          state.frontPosition = state.frontPosition === "bottom" ? "top" : "bottom";
+          render();
+          save();
+          announce(`Front of room moved to the ${state.frontPosition}.`);
+        });
         $("clearAttendanceBtn").addEventListener("click", () => { attendanceAbsentIds.clear(); render(); });
         $("copyAttendanceBtn").addEventListener("click", async () => {
           const names = state.students.filter((student) => attendanceAbsentIds.has(student.id)).map((student) => student.name).sort((a, b) => a.localeCompare(b));
@@ -2673,7 +2693,7 @@
           const preservedSkin = state.skin;
           const preservedUniform = state.uniform;
           Object.assign(state, {
-            step: "build", tool: "desk", rows: 8, cols: 10, students: [], pairExclusions: [], seatingRules: { apart: [], together: [], nearBoard: [] },
+            step: "build", tool: "desk", rows: 8, cols: 10, frontPosition: "top", students: [], pairExclusions: [], seatingRules: { apart: [], together: [], nearBoard: [] },
             selectedStudentId: null, swapMode: false, swapFirstId: null, printTheme: false,
             dark: preservedUniform === "dark", skin: preservedSkin, uniform: preservedUniform,
             version: "teacher", chartTitle: "Classroom Seating Chart", teacher: "",
