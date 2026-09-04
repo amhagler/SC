@@ -12,6 +12,7 @@
       --desk: rgba(12, 42, 72, .92); --desk-border: #77d7ff; --path: rgba(49, 92, 255, .16);
       --accent: #77d7ff; --accent-strong: #315cff; --atmosphere: rgba(119, 215, 255, .18);
       --gold: #ffd166; --danger: #ff6868; --ok: #72e6a1; --focus: rgba(119, 215, 255, .32);
+      --tardy: #ff9f43; --on-accent: #071018; --on-danger:#240505; --on-tardy:#281300;
       --radius: 12px;
       --cell-w: 96px;
       --cell-h: 62px;
@@ -26,7 +27,7 @@
     body[data-skin="cyberpunk"] { --bg:#050712;--bg2:#0b1024;--panel:rgba(8,13,28,.91);--panel-soft:rgba(24,21,56,.76);--ink:#eaf7ff;--muted:#afc6db;--line:rgba(161,92,255,.28);--desk:rgba(20,24,54,.95);--desk-border:#5debff;--path:rgba(161,92,255,.15);--accent:#5debff;--accent-strong:#8d65ff;--atmosphere:rgba(141,101,255,.20);--focus:rgba(93,235,255,.30) }
     body[data-skin="brass"] { --bg:#050b16;--bg2:#101d32;--panel:rgba(9,21,38,.91);--panel-soft:rgba(23,34,51,.77);--ink:#fff0cf;--muted:#c8cbd0;--line:rgba(213,168,78,.28);--desk:rgba(26,39,57,.95);--desk-border:#d5a84e;--path:rgba(40,91,122,.22);--accent:#d5a84e;--accent-strong:#91671f;--atmosphere:rgba(213,168,78,.17);--focus:rgba(213,168,78,.30) }
 
-    body[data-uniform="silver"] { --bg:#b9c1c8;--bg2:#e5e9ec;--panel:rgba(241,244,246,.90);--panel-soft:rgba(210,217,222,.78);--ink:#111a22;--muted:#465461;--line:rgba(42,58,70,.26);--desk:rgba(247,249,250,.94);--path:rgba(89,104,116,.15);--shadow:0 14px 36px rgba(30,42,52,.20) }
+    body[data-uniform="silver"] { --bg:#b9c1c8;--bg2:#e5e9ec;--panel:rgba(241,244,246,.90);--panel-soft:rgba(210,217,222,.78);--ink:#111a22;--muted:#465461;--line:rgba(42,58,70,.26);--desk:rgba(247,249,250,.94);--path:rgba(89,104,116,.15);--shadow:0 14px 36px rgba(30,42,52,.20);--on-accent:#fff }
     body[data-uniform="silver"][data-skin="astrometrics"] { --accent:#087ca8;--accent-strong:#164cc4;--desk-border:#087ca8;--atmosphere:rgba(0,135,190,.20);--focus:rgba(8,124,168,.28) }
     body[data-uniform="silver"][data-skin="imperial"] { --accent:#b42f25;--accent-strong:#751a16;--desk-border:#b42f25;--atmosphere:rgba(180,47,37,.17);--focus:rgba(180,47,37,.27) }
     body[data-uniform="silver"][data-skin="obsidian"] { --accent:#4f7700;--accent-strong:#2e4c00;--desk-border:#5b8500;--atmosphere:rgba(116,169,0,.18);--focus:rgba(79,119,0,.26) }
@@ -107,7 +108,7 @@
     .step.active {
       background: var(--accent);
       border-color: var(--accent);
-      color: #071018;
+      color: var(--on-accent);
     }
 
     .section {
@@ -162,10 +163,11 @@
     }
 
     button:hover { border-color: var(--accent); box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 22%, transparent), inset 0 1px 0 rgba(255,255,255,.12); }
-    button.primary { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, white), var(--accent-strong)); border-color: var(--accent); color: #071018; }
+    button.primary { background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 88%, white), var(--accent)); border-color: var(--accent); color: var(--on-accent); }
+    body[data-uniform="silver"] button.primary { background:linear-gradient(180deg,var(--accent),color-mix(in srgb,var(--accent) 78%,black)); }
     button.warning { background: var(--gold); border-color: var(--gold); color: #211600; }
     button.danger { color: var(--danger); }
-    button.active { background: var(--accent); border-color: var(--accent); color: #071018; }
+    button.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
     button:focus-visible, input:focus, select:focus, textarea:focus {
       outline: 3px solid var(--focus);
       outline-offset: 1px;
@@ -293,7 +295,7 @@
       display: grid;
       place-items: center;
       background: var(--accent);
-      color: #071018;
+      color: var(--on-accent);
       font-weight: 900;
       font-size: 11px;
     }
@@ -311,7 +313,7 @@
     .top-tabs { max-width: 1480px; margin: 0 auto 12px; display: flex; gap: 8px; }
     .top-tabs .backup-actions { margin-left: auto; display: flex; gap: 8px; }
     .top-tab { font-size: 14px; padding: 10px 16px; }
-    .top-tab.active { background: var(--accent); border-color: var(--accent); color: #071018; box-shadow:0 0 18px color-mix(in srgb,var(--accent) 28%,transparent); }
+    .top-tab.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); box-shadow:0 0 18px color-mix(in srgb,var(--accent) 28%,transparent); }
     .group-app { max-width: 1480px; margin: 0 auto; display: none; grid-template-columns: 360px minmax(0, 1fr); gap: 16px; align-items: start; }
     .group-app.active { display: grid; }
     .group-controls details { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
@@ -325,7 +327,7 @@
     .group-heading .sub { font-size: 15px; }
     .group-board { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; }
     .group-card { border: 2px solid var(--desk-border); border-radius: 12px; background: var(--panel-soft); overflow: hidden; box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 15%, transparent), inset 0 1px 0 rgba(255,255,255,.08); }
-    .group-card h3 { background: linear-gradient(100deg, var(--accent-strong), var(--accent)); color: #071018; padding: 10px 14px; font-size: 18px; }
+    .group-card h3 { background: var(--accent); color: var(--on-accent); padding: 10px 14px; font-size: 18px; }
     .group-card ul { list-style: none; padding: 12px 16px 14px; margin: 0; display: grid; gap: 8px; }
     .group-card li { font-size: clamp(18px, 2vw, 28px); font-weight: 850; line-height: 1.15; }
     .group-empty { color: var(--muted); text-align: center; padding: 80px 20px; font-size: 18px; }
@@ -338,7 +340,7 @@
     .generate-show:disabled { opacity:.58; cursor:wait; }
     .shuffle-layer { position:fixed; inset:0; z-index:140; pointer-events:none; display:none; overflow:hidden; background:radial-gradient(520px 300px at 50% 44%,color-mix(in srgb,var(--accent) 13%,transparent),transparent 72%); }
     .shuffle-layer.active { display:block; }
-    .shuffle-chip { position:absolute; left:50%; top:44%; padding:8px 13px; border-radius:999px; white-space:nowrap; color:#071018; font-weight:900; background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 88%,white),var(--accent-strong)); border:1px solid color-mix(in srgb,var(--accent) 72%,white); box-shadow:0 0 22px color-mix(in srgb,var(--accent) 55%,transparent); animation-duration:3.4s; animation-timing-function:cubic-bezier(.35,.02,.25,1); animation-fill-mode:both; animation-delay:var(--delay); }
+    .shuffle-chip { position:absolute; left:50%; top:44%; padding:8px 13px; border-radius:999px; white-space:nowrap; color:var(--on-accent); font-weight:900; background:var(--accent); border:1px solid color-mix(in srgb,var(--accent) 72%,white); box-shadow:0 0 22px color-mix(in srgb,var(--accent) 55%,transparent); animation-duration:3.4s; animation-timing-function:cubic-bezier(.35,.02,.25,1); animation-fill-mode:both; animation-delay:var(--delay); }
     .shuffle-layer.orbit .shuffle-chip { animation-name:holoOrbit; }
     .shuffle-layer.stream .shuffle-chip { animation-name:dataStream; top:var(--lane); }
     .shuffle-layer.vortex .shuffle-chip { animation-name:magneticVortex; }
@@ -564,8 +566,8 @@
       width: calc(100% - 14px);
       min-height: 30px;
       border-radius: 999px;
-      background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 88%, white), var(--accent-strong));
-      color: #071018;
+      background: var(--accent);
+      color: var(--on-accent);
       display: grid;
       place-items: center;
       text-align: center;
@@ -590,13 +592,17 @@
 
     body.attendance-mode .token { cursor:pointer; }
     .cell.attendance-absent { border-color:var(--danger); box-shadow:0 0 16px color-mix(in srgb,var(--danger) 58%,transparent),inset 0 0 18px color-mix(in srgb,var(--danger) 18%,transparent); }
-    .cell.attendance-absent .token { background:linear-gradient(135deg,color-mix(in srgb,var(--danger) 78%,white),var(--danger)); color:#240505; text-decoration:line-through; }
+    .cell.attendance-absent .token { background:linear-gradient(135deg,color-mix(in srgb,var(--danger) 78%,white),var(--danger)); color:var(--on-danger); text-decoration:line-through; }
+    .cell.attendance-tardy { border-color:var(--tardy); box-shadow:0 0 16px color-mix(in srgb,var(--tardy) 58%,transparent),inset 0 0 18px color-mix(in srgb,var(--tardy) 18%,transparent); }
+    .cell.attendance-tardy .token { background:linear-gradient(135deg,color-mix(in srgb,var(--tardy) 76%,white),var(--tardy)); color:var(--on-tardy); }
     .attendance-panel { display:none; margin:12px 16px 16px; padding:12px 14px; border:1px solid var(--line); border-radius:var(--radius); background:var(--panel-soft); }
     body.attendance-mode .attendance-panel { display:block; }
     .attendance-head { display:flex; align-items:center; gap:8px; margin-bottom:9px; }
     .attendance-head strong { margin-right:auto; }
     .attendance-list { display:flex; flex-wrap:wrap; gap:7px; min-height:28px; }
+    .attendance-status-label { align-self:center; color:var(--muted); font-size:11px; font-weight:950; letter-spacing:.08em; text-transform:uppercase; }
     .attendance-name { border:1px solid color-mix(in srgb,var(--danger) 60%,var(--line)); border-radius:999px; padding:6px 10px; background:color-mix(in srgb,var(--danger) 13%,var(--panel)); color:var(--ink); font-weight:850; }
+    .attendance-name.tardy { border-color:color-mix(in srgb,var(--tardy) 68%,var(--line)); background:color-mix(in srgb,var(--tardy) 18%,var(--panel)); }
 
     .path .token, .cell:not(.desk) .token { display: none; }
 
@@ -875,8 +881,8 @@
         </div>
       </div>
       <div class="attendance-panel" id="attendancePanel">
-        <div class="attendance-head"><strong id="attendanceCount">Absent · 0</strong><button id="copyAttendanceBtn" type="button">Copy list</button><button id="clearAttendanceBtn" type="button">Clear</button></div>
-        <div class="attendance-list" id="attendanceList"><span class="hint">Click a student’s seat to mark them absent.</span></div>
+        <div class="attendance-head"><strong id="attendanceCount">Absent · 0 · Tardy · 0</strong><button id="copyAttendanceBtn" type="button">Copy list</button><button id="clearAttendanceBtn" type="button">Clear</button></div>
+        <div class="attendance-list" id="attendanceList"><span class="hint">Click once for absent, twice for tardy, and three times to reset.</span></div>
       </div>
     </section>
   </main>
@@ -1061,6 +1067,7 @@
       let isPainting = false;
       let attendanceMode = false;
       const attendanceAbsentIds = new Set();
+      const attendanceTardyIds = new Set();
       const $ = (id) => document.getElementById(id);
       const els = {
         grid: $("grid"),
@@ -1261,7 +1268,7 @@
         const entry = library.charts.find((item) => item.name === $("chartLibrarySelect").value);
         if (!entry) return;
         pushHistory();
-        attendanceMode = false; attendanceAbsentIds.clear();
+        attendanceMode = false; attendanceAbsentIds.clear(); attendanceTardyIds.clear();
         const data = entry.data;
         state.rows = data.rows; state.cols = data.cols;
         state.frontPosition = data.frontPosition === "bottom" ? "bottom" : "top";
@@ -1280,7 +1287,7 @@
         const entry = (isRoom ? library.rooms : library.rosters).find((item) => item.name === select.value);
         if (!entry) return;
         pushHistory();
-        attendanceMode = false; attendanceAbsentIds.clear();
+        attendanceMode = false; attendanceAbsentIds.clear(); attendanceTardyIds.clear();
         if (isRoom) {
           state.rows = entry.data.rows;
           state.cols = entry.data.cols;
@@ -1677,6 +1684,7 @@
             }
             const studentId = state.placements.get(key);
             if (studentId && attendanceAbsentIds.has(studentId)) cell.classList.add("attendance-absent");
+            if (studentId && attendanceTardyIds.has(studentId)) cell.classList.add("attendance-tardy");
             if (studentId) {
               const student = getStudent(studentId);
               if (student) {
@@ -1688,8 +1696,14 @@
                 token.addEventListener("click", (event) => {
                   event.stopPropagation();
                   if (attendanceMode) {
-                    if (attendanceAbsentIds.has(student.id)) attendanceAbsentIds.delete(student.id);
-                    else attendanceAbsentIds.add(student.id);
+                    if (attendanceAbsentIds.has(student.id)) {
+                      attendanceAbsentIds.delete(student.id);
+                      attendanceTardyIds.add(student.id);
+                    } else if (attendanceTardyIds.has(student.id)) {
+                      attendanceTardyIds.delete(student.id);
+                    } else {
+                      attendanceAbsentIds.add(student.id);
+                    }
                     render();
                     return;
                   }
@@ -2355,6 +2369,7 @@
           const backup = JSON.parse(await file.text());
           if (backup.format !== "seating-tools-backup" || !backup.active || !backup.library) throw new Error("Unsupported backup format");
           if (!confirm("Replace the active work and all saved rooms and rosters with this backup?")) return;
+          attendanceMode = false; attendanceAbsentIds.clear(); attendanceTardyIds.clear();
           restore(backup.active);
           library.rooms = Array.isArray(backup.library.rooms) ? backup.library.rooms.slice(0, 4) : [];
           library.rosters = Array.isArray(backup.library.rosters) ? backup.library.rosters.slice(0, 7) : [];
@@ -2411,23 +2426,34 @@
         $("attendanceModeBtn").textContent = attendanceMode ? "Attendance: On" : "Attendance";
         const validIds = new Set(state.students.map((student) => student.id));
         for (const id of [...attendanceAbsentIds]) if (!validIds.has(id)) attendanceAbsentIds.delete(id);
+        for (const id of [...attendanceTardyIds]) if (!validIds.has(id)) attendanceTardyIds.delete(id);
         const absent = state.students.filter((student) => attendanceAbsentIds.has(student.id)).sort((a, b) => a.name.localeCompare(b.name));
-        $("attendanceCount").textContent = `Absent · ${absent.length}`;
+        const tardy = state.students.filter((student) => attendanceTardyIds.has(student.id)).sort((a, b) => a.name.localeCompare(b.name));
+        $("attendanceCount").textContent = `Absent · ${absent.length} · Tardy · ${tardy.length}`;
         const list = $("attendanceList");
         list.innerHTML = "";
-        if (!absent.length) {
+        if (!absent.length && !tardy.length) {
           const hint = document.createElement("span");
           hint.className = "hint";
-          hint.textContent = "Click a student’s seat to mark them absent.";
+          hint.textContent = "Click once for absent, twice for tardy, and three times to reset.";
           list.appendChild(hint);
           return;
         }
-        absent.forEach((student) => {
-          const pill = document.createElement("span");
-          pill.className = "attendance-name";
-          pill.textContent = student.name;
-          list.appendChild(pill);
-        });
+        const appendGroup = (labelText, students, className = "") => {
+          if (!students.length) return;
+          const label = document.createElement("span");
+          label.className = "attendance-status-label";
+          label.textContent = labelText;
+          list.appendChild(label);
+          students.forEach((student) => {
+            const pill = document.createElement("span");
+            pill.className = `attendance-name ${className}`.trim();
+            pill.textContent = student.name;
+            list.appendChild(pill);
+          });
+        };
+        appendGroup("Absent", absent);
+        appendGroup("Tardy", tardy, "tardy");
       }
 
       function render() {
@@ -2612,14 +2638,15 @@
           save();
           announce(`Front of room moved to the ${state.frontPosition}.`);
         });
-        $("clearAttendanceBtn").addEventListener("click", () => { attendanceAbsentIds.clear(); render(); });
+        $("clearAttendanceBtn").addEventListener("click", () => { attendanceAbsentIds.clear(); attendanceTardyIds.clear(); render(); });
         $("copyAttendanceBtn").addEventListener("click", async () => {
-          const names = state.students.filter((student) => attendanceAbsentIds.has(student.id)).map((student) => student.name).sort((a, b) => a.localeCompare(b));
-          if (!names.length) return alert("No students are currently marked absent.");
-          const text = names.join("\n");
+          const absent = state.students.filter((student) => attendanceAbsentIds.has(student.id)).map((student) => student.name).sort((a, b) => a.localeCompare(b));
+          const tardy = state.students.filter((student) => attendanceTardyIds.has(student.id)).map((student) => student.name).sort((a, b) => a.localeCompare(b));
+          if (!absent.length && !tardy.length) return alert("No students are currently marked absent or tardy.");
+          const text = [`Absent (${absent.length}):`, ...(absent.length ? absent : ["None"]), "", `Tardy (${tardy.length}):`, ...(tardy.length ? tardy : ["None"])].join("\n");
           try {
             await navigator.clipboard.writeText(text);
-            announce(`${names.length} absent name${names.length === 1 ? "" : "s"} copied.`);
+            announce("Attendance list copied.");
           } catch {
             prompt("Copy the absent list:", text);
           }
@@ -2702,7 +2729,7 @@
           });
           state.desks = new Set(); state.paths = new Set(); state.labels = new Map();
           state.placements = new Map(); state.previousPlacements = new Map();
-          attendanceMode = false; attendanceAbsentIds.clear();
+          attendanceMode = false; attendanceAbsentIds.clear(); attendanceTardyIds.clear();
           render(); save();
           announce("Active chart reset. Appearance and saved library were kept.");
         });
